@@ -20,3 +20,9 @@ bool Block::IsActive()
 {
     return m_active;
 }
+
+void Block::SetActive(bool isActive)
+{
+    m_active = isActive;
+}
+

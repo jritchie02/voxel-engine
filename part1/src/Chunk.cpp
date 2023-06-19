@@ -1,11 +1,14 @@
 #include "Chunk.hpp"
 #include <iostream>
+#include "PerlinNoise.hpp"
 
 Chunk::Chunk()
 {
     // Initialize the m_Blocks vector
     m_Blocks.resize(CHUNK_SIZE, std::vector<std::vector<Block>>(CHUNK_SIZE, std::vector<Block>(CHUNK_SIZE)));
+    const siv::PerlinNoise::seed_type seed = 123456u;
 
+    const siv::PerlinNoise perlin{seed};
     // Iterate over x, y, z coordinates to initialize each block
     for (int x = 0; x < CHUNK_SIZE; ++x)
     {
@@ -13,9 +16,20 @@ Chunk::Chunk()
         {
             for (int z = 0; z < CHUNK_SIZE; ++z)
             {
+                // Generate terrain using Perlin noise
+                const double noise = perlin.noise3D_01((y * 0.01), (x * 0.01), (z * 0.01));
+
+                // Define the threshold value for terrain generation
+                double threshold = 0.48; // Adjust this value to control the terrain height
+                
                 // Create and assign a new block
                 Block block(x, y, z);
                 m_Blocks[x][y][z] = block;
+
+                if (noise < threshold)
+                {
+                    m_Blocks[x][y][z].SetActive(false);
+                }
             }
         }
     }
@@ -61,11 +75,11 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
 
     // Calculate the coordinates of the cube's vertices based on the block position
     std::vector<GLfloat> vertices;
-    
+
     // Front face
     if (!hasNeighborOnFace(x, y, z, 0, 0, 1))
     {
-        //std::cout << "Adding front face" << std::endl;
+        // std::cout << "Adding front face" << std::endl;
         vertices.insert(vertices.end(), {
                                             blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, color[0], color[1], color[2], // Vertex 0
                                             blockPosition.x + halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, color[0], color[1], color[2], // Vertex 1
@@ -77,7 +91,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
     // Back face
     if (!hasNeighborOnFace(x, y, z, 0, 0, -1))
     {
-        //std::cout << "Adding back face" << std::endl;
+        // std::cout << "Adding back face" << std::endl;
         vertices.insert(vertices.end(), {
                                             blockPosition.x + halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, color[0], color[1], color[2], // Vertex 4
                                             blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, color[0], color[1], color[2], // Vertex 5
@@ -89,7 +103,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
     // Left face
     if (!hasNeighborOnFace(x, y, z, -1, 0, 0))
     {
-        //std::cout << "Adding left face" << std::endl;
+        // std::cout << "Adding left face" << std::endl;
         vertices.insert(vertices.end(), {
                                             blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, color[0], color[1], color[2], // Vertex 8
                                             blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, color[0], color[1], color[2], // Vertex 9
@@ -101,7 +115,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
     // Right face
     if (!hasNeighborOnFace(x, y, z, 1, 0, 0))
     {
-        //std::cout << "Adding right face" << std::endl;
+        // std::cout << "Adding right face" << std::endl;
         vertices.insert(vertices.end(), {
                                             blockPosition.x + halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, color[0], color[1], color[2], // Vertex 12
                                             blockPosition.x + halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, color[0], color[1], color[2], // Vertex 13
@@ -113,7 +127,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
     // Top face
     if (!hasNeighborOnFace(x, y, z, 0, 1, 0))
     {
-        //std::cout << "Adding top face" << std::endl;
+        // std::cout << "Adding top face" << std::endl;
         vertices.insert(vertices.end(), {
                                             blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, color[0], color[1], color[2], // Vertex 16
                                             blockPosition.x + halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, color[0], color[1], color[2], // Vertex 17
@@ -125,7 +139,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
     // Bottom face
     if (!hasNeighborOnFace(x, y, z, 0, -1, 0))
     {
-        //std::cout << "Adding bottom face" << std::endl;
+        // std::cout << "Adding bottom face" << std::endl;
         vertices.insert(vertices.end(), {
                                             blockPosition.x - halfSize, blockPosition.y - halfSize, blockPosition.z + halfSize, color[0], color[1], color[2], // Vertex 20
                                             blockPosition.x + halfSize, blockPosition.y - halfSize, blockPosition.z + halfSize, color[0], color[1], color[2], // Vertex 21
