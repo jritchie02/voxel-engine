@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 class Block
 {
@@ -20,19 +21,15 @@ class Block
 
 public:
     Block();
+    Block(int x, int y, int z);
     ~Block();
     bool IsActive();
     void SetActive(bool active);
-
-    const std::vector<GLfloat> get_vertex_data();
-    const std::vector<GLuint> get_index_data();
-
+    
 private:
-    std::vector<GLfloat> m_vertices;
-     std::vector<GLuint> m_indices;
     bool m_active;
     BlockType m_blockType;
-
+    glm::vec3 m_position;
 };
 
 #endif /* BLOCK_HPP*/

@@ -28,7 +28,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp> 
 
-#include "Block.hpp"
+#include "Chunk.hpp"
 #include "Camera.hpp"
 #include "Texture.hpp"
 
@@ -308,17 +308,17 @@ void InitializeProgram()
  *
  * @return void
  */
-void VertexSpecification(std::vector<Block> &blocks)
+void VertexSpecification(Chunk &chunk)
 {
 	std::vector<GLfloat> vertexData;
 	
 	// Load the diffuse texture 
-	//gTexture.LoadTexture(blocks.at(modelId).get_diffuse_texture());
+	//gTexture.LoadTexture(chunks.at(modelId).get_diffuse_texture());
 	
 	// Get the vertex data for the model
-	vertexData = blocks.at(modelId).get_vertex_data();
+	vertexData = chunk.get_vertex_data();
 
-	std::cout << vertexData.size() << std::endl;
+	std::cout << "vertex data size " << vertexData.size() << std::endl;
 	// Vertex Arrays Object (VAO) Setup
 	glGenVertexArrays(1, &gVertexArrayObject);
 	// We bind (i.e. select) to the Vertex Array Object (VAO) that we want to work withn.
@@ -343,7 +343,7 @@ void VertexSpecification(std::vector<Block> &blocks)
 	// Index buffer data for a quad
 	std::vector<GLuint> indexBufferData;
 
-	indexBufferData = blocks.at(modelId).get_index_data();
+	indexBufferData = chunk.get_index_data();
 	std::cout << indexBufferData.size() << std::endl;
 
 	glGenBuffers(1, &gIndexBufferObject);
@@ -411,8 +411,6 @@ void VertexSpecification(std::vector<Block> &blocks)
  */
 void PreDraw()
 {
-	// Disable depth test and face culling.
-	//glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	// Enable texture mapping
@@ -428,8 +426,8 @@ void PreDraw()
 
 	// Use our shader
 	glUseProgram(gGraphicsPipelineShaderProgram);
-	    // Model transformation by translating our object into world space
-
+	
+	// Model transformation by translating our object into world spaceu
     glm::mat4 model = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,0.0f,g_uOffset)); 
 
     // Update our model matrix by applying a rotation after our translation
@@ -494,7 +492,7 @@ void PreDraw()
  *
  * @return void
  */
-void Draw(std::vector<Block> &blocks)
+void Draw(Chunk &chunk)
 {
 	if (drawType)
 	{
@@ -515,7 +513,7 @@ void Draw(std::vector<Block> &blocks)
 
 	// Render data
 
-	elements = blocks.at(modelId).get_index_data().size();
+	elements = chunk.get_index_data().size();
 
 	glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, nullptr);
 
@@ -614,7 +612,7 @@ void Input()
  *
  * @return void
  */
-void MainLoop(std::vector<Block> &blocks)
+void MainLoop(Chunk &chunk)
 {
 	SDL_WarpMouseInWindow(gGraphicsApplicationWindow, 640/2,480/2);
 
@@ -627,7 +625,7 @@ void MainLoop(std::vector<Block> &blocks)
 		// place before draw calls
 		PreDraw();
 		// Draw Calls in OpenGL
-		Draw(blocks);
+		Draw(chunk);
 		// Update screen of our specified window
 		SDL_GL_SwapWindow(gGraphicsApplicationWindow);
 	}
@@ -664,22 +662,20 @@ void CleanUp()
  */
 int main(int argc, char **argv)
 {
-	Block block1 = Block();
-	std::vector<Block> blocks;
-	blocks.push_back(block1);
+	Chunk chunk = Chunk();
 
 	// 2. Setup the graphics program
 	InitializeProgram();
 
 	// 3. Setup our geometry
-	VertexSpecification(blocks);
+	VertexSpecification(chunk);
 
 	// 4. Create our graphics pipeline
 	// 	- At a minimum, this means the vertex and fragment shader
 	CreateGraphicsPipeline();
 
 	// 5. Call the main application loop
-	MainLoop(blocks);
+	MainLoop(chunk);
 
 	// 6. Call the cleanup function when our program terminates
 	CleanUp();
