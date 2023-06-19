@@ -11,18 +11,17 @@ public:
     Chunk();
     ~Chunk();
     // void Update(float dt);
-    // void Render(OpenGLRenderer *pRenderer);
-    static const int CHUNK_SIZE = 2;
-    static const int BLOCK_SIZE = 1;
+    static const int CHUNK_SIZE = 16;
+    static constexpr float BLOCK_SIZE = 0.5f;
     const std::vector<GLfloat> get_vertex_data();
     const std::vector<GLuint> get_index_data();
-
-   
-
+    
 private: // The blocks data
     std::vector<std::vector<std::vector<Block>>> m_Blocks;
-    std::vector<GLfloat> generateCubeVertices(glm::vec3 &blockPosition);
-    std::vector<GLuint> generateBlockIndices(GLuint baseIndex);
+    std::vector<GLfloat> generateCubeVertices(int x, int y, int z);
+    std::vector<GLuint> generateBlockIndices(GLuint &baseIndex, int x, int y, int z);
+    bool hasNeighborOnFace(int x, int y, int z, int offsetX, int offsetY, int offsetZ);
+    void addFace(std::vector<GLuint> &indices, GLuint &baseIndex);
 };
 
 #endif /* CHUNK_HPP */

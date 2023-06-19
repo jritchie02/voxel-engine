@@ -26,7 +26,7 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp> 
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "Chunk.hpp"
 #include "Camera.hpp"
@@ -73,64 +73,70 @@ bool loadedModel = false;
 // Here we setup two shaders, a vertex shader and a fragment shader.
 // At a minimum, every Modern OpenGL program needs a vertex and a fragment
 // shader.
-float g_uOffset=-2.0f;
-float g_uRotate=0.0f;
+float g_uOffset = -2.0f;
+float g_uRotate = 0.0f;
 
 // Camera
 Camera gCamera;
 // Texture
 Texture gTexture;
 
-
 // ^^^^^^^^^^^^^^^^^^^^^^^^ Globals ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
 // vvvvvvvvvvvvvvvvvvv Error Handling Routines vvvvvvvvvvvvvvv
-static void GLClearAllErrors(){
-    while(glGetError() != GL_NO_ERROR){
-    }
+static void GLClearAllErrors()
+{
+	while (glGetError() != GL_NO_ERROR)
+	{
+	}
 }
 
 // Returns true if we have an error
-static bool GLCheckErrorStatus(const char* function, int line){
-    while(GLenum error = glGetError()){
-        std::cout << "OpenGL Error:" << error 
-                  << "\tLine: " << line 
-                  << "\tfunction: " << function << std::endl;
-        return true;
-    }
-    return false;
+static bool GLCheckErrorStatus(const char *function, int line)
+{
+	while (GLenum error = glGetError())
+	{
+		std::cout << "OpenGL Error:" << error
+				  << "\tLine: " << line
+				  << "\tfunction: " << function << std::endl;
+		return true;
+	}
+	return false;
 }
 
-#define GLCheck(x) GLClearAllErrors(); x; GLCheckErrorStatus(#x,__LINE__);
+#define GLCheck(x)      \
+	GLClearAllErrors(); \
+	x;                  \
+	GLCheckErrorStatus(#x, __LINE__);
 // ^^^^^^^^^^^^^^^^^^^ Error Handling Routines ^^^^^^^^^^^^^^^
 
 /**
-* LoadShaderAsString takes a filepath as an argument and will read line by line a file and return a string that is meant to be compiled at runtime for a vertex, fragment, geometry, tesselation, or compute shader.
-* e.g.
-*       LoadShaderAsString("./shaders/filepath");
-*
-* @param filename Path to the shader file
-* @return Entire file stored as a single string 
-*/
-std::string LoadShaderAsString(const std::string& filename){
-    // Resulting shader program loaded as a single string
-    std::string result = "";
+ * LoadShaderAsString takes a filepath as an argument and will read line by line a file and return a string that is meant to be compiled at runtime for a vertex, fragment, geometry, tesselation, or compute shader.
+ * e.g.
+ *       LoadShaderAsString("./shaders/filepath");
+ *
+ * @param filename Path to the shader file
+ * @return Entire file stored as a single string
+ */
+std::string LoadShaderAsString(const std::string &filename)
+{
+	// Resulting shader program loaded as a single string
+	std::string result = "";
 
-    std::string line = "";
-    std::ifstream myFile(filename.c_str());
+	std::string line = "";
+	std::ifstream myFile(filename.c_str());
 
-    if(myFile.is_open()){
-        while(std::getline(myFile, line)){
-            result += line + '\n';
-        }
-        myFile.close();
+	if (myFile.is_open())
+	{
+		while (std::getline(myFile, line))
+		{
+			result += line + '\n';
+		}
+		myFile.close();
+	}
 
-    }
-
-    return result;
+	return result;
 }
-
 
 /**
  * CompileShader will compile any valid vertex, fragment, geometry, tesselation, or compute shader.
@@ -242,10 +248,10 @@ GLuint CreateShaderProgram(const std::string &vertexShaderSource, const std::str
  */
 void CreateGraphicsPipeline()
 {
-	std::string vertexShaderSource      = LoadShaderAsString("./shaders/vert.glsl");
-    std::string fragmentShaderSource    = LoadShaderAsString("./shaders/frag.glsl");
+	std::string vertexShaderSource = LoadShaderAsString("./shaders/vert.glsl");
+	std::string fragmentShaderSource = LoadShaderAsString("./shaders/frag.glsl");
 
-	gGraphicsPipelineShaderProgram = CreateShaderProgram(vertexShaderSource,fragmentShaderSource);
+	gGraphicsPipelineShaderProgram = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
 }
 
 /**
@@ -311,10 +317,10 @@ void InitializeProgram()
 void VertexSpecification(Chunk &chunk)
 {
 	std::vector<GLfloat> vertexData;
-	
-	// Load the diffuse texture 
-	//gTexture.LoadTexture(chunks.at(modelId).get_diffuse_texture());
-	
+
+	// Load the diffuse texture
+	// gTexture.LoadTexture(chunks.at(modelId).get_diffuse_texture());
+
 	// Get the vertex data for the model
 	vertexData = chunk.get_vertex_data();
 
@@ -327,18 +333,18 @@ void VertexSpecification(Chunk &chunk)
 	// Vertex Buffer Object (VBO) creation
 	// Create a new vertex buffer object
 	glGenBuffers(1, &gVertexBufferObject);
-	
+
 	// Bind is equivalent to 'selecting the active buffer object' that we want to
 	// work with in OpenGL.
 	glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
 	// Now, in our currently binded buffer, we populate the data from our
 	// 'vertexPositions' (which is on the CPU), onto a buffer that will live
 	// on the GPU.
-	glBufferData(GL_ARRAY_BUFFER,						   // Kind of buffer we are working with
-														   // (e.g. GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER)
-				 vertexData.size() * sizeof(GLfloat), 	   // Size of data in bytes
-				 vertexData.data(),				   		   // Raw array of data
-				 GL_STATIC_DRAW);						   // How we intend to use the data
+	glBufferData(GL_ARRAY_BUFFER,					  // Kind of buffer we are working with
+													  // (e.g. GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER)
+				 vertexData.size() * sizeof(GLfloat), // Size of data in bytes
+				 vertexData.data(),					  // Raw array of data
+				 GL_STATIC_DRAW);					  // How we intend to use the data
 
 	// Index buffer data for a quad
 	std::vector<GLuint> indexBufferData;
@@ -357,49 +363,48 @@ void VertexSpecification(Chunk &chunk)
 	// For the specific attribute in our vertex specification, we use
 	// 'glVertexAttribPointer' to figure out how we are going to move
 	// through the data.
-	glVertexAttribPointer(0,		// Attribute 0 corresponds to the enabled glEnableVertexAttribArray
-									// In the future, you'll see in our vertex shader this also correspond
-									// to (layout=0) which selects these attributes.
-						  3,		// The number of components (e.g. x,y,z = 3 components)
-						  GL_FLOAT, // Type
-						  GL_FALSE, // Is the data normalized
-						  sizeof(GL_FLOAT) * 6,		// Stride
-						  (void *)0 // Offset
+	glVertexAttribPointer(0, // Attribute 0 corresponds to the enabled glEnableVertexAttribArray
+							 // In the future, you'll see in our vertex shader this also correspond
+							 // to (layout=0) which selects these attributes.
+						  3,					// The number of components (e.g. x,y,z = 3 components)
+						  GL_FLOAT,				// Type
+						  GL_FALSE,				// Is the data normalized
+						  sizeof(GL_FLOAT) * 6, // Stride
+						  (void *)0				// Offset
 	);
-	
-    // Now linking up the attributes in our VAO
-    // Color information
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1,
-                          3, // r,g,b
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(GL_FLOAT)*6,
-                          (GLvoid*)(sizeof(GL_FLOAT)*3)
-            );
+
+	// Now linking up the attributes in our VAO
+	// Color information
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1,
+						  3, // r,g,b
+						  GL_FLOAT,
+						  GL_FALSE,
+						  sizeof(GL_FLOAT) * 6,
+						  (GLvoid *)(sizeof(GL_FLOAT) * 3));
 
 	/*
-	
-    // Now linking up the attributes in our VAO
-    // Texture :information
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2,
-                          2, // s,t
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(GL_FLOAT)*8,
-                          (GLvoid*)(sizeof(GL_FLOAT)*6)
-            );
+
+	// Now linking up the attributes in our VAO
+	// Texture :information
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2,
+						  2, // s,t
+						  GL_FLOAT,
+						  GL_FALSE,
+						  sizeof(GL_FLOAT)*8,
+						  (GLvoid*)(sizeof(GL_FLOAT)*6)
+			);
 */
 
 	// Unbind our currently bound Vertex Array Object
 	glBindVertexArray(0);
-	
+
 	// Disable any attributes we opened in our Vertex Attribute Arrray,
-	// as we do not want to leave them open. 
+	// as we do not want to leave them open.
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	//glDisableVertexAttribArray(2);
+	// glDisableVertexAttribArray(2);
 }
 
 /**
@@ -411,10 +416,9 @@ void VertexSpecification(Chunk &chunk)
  */
 void PreDraw()
 {
-	glDisable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	// Enable texture mapping
-	glEnable(GL_TEXTURE_2D);
+	// glEnable(GL_TEXTURE_2D);
 
 	// Initialize clear color
 	// This is the background of the screen.
@@ -426,49 +430,59 @@ void PreDraw()
 
 	// Use our shader
 	glUseProgram(gGraphicsPipelineShaderProgram);
-	
+
 	// Model transformation by translating our object into world spaceu
-    glm::mat4 model = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,0.0f,g_uOffset)); 
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, g_uOffset));
 
-    // Update our model matrix by applying a rotation after our translation
-    model           = glm::rotate(model,glm::radians(g_uRotate), glm::vec3(0.0f,1.0f,0.0f));
+	// Update our model matrix by applying a rotation after our translation
+	model = glm::rotate(model, glm::radians(g_uRotate), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Retrieve our location of our Model Matrix
-    GLint u_ModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram,"u_ModelMatrix");
-    if (u_ModelMatrixLocation >=0) {
-        glUniformMatrix4fv(u_ModelMatrixLocation,1,GL_FALSE,&model[0][0]);
-    } else {
-        std::cout << "Could not find u_ModelMatrix, maybe a mispelling?\n";
-        exit(EXIT_FAILURE);
-    }
+	// Retrieve our location of our Model Matrix
+	GLint u_ModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ModelMatrix");
+	if (u_ModelMatrixLocation >= 0)
+	{
+		glUniformMatrix4fv(u_ModelMatrixLocation, 1, GL_FALSE, &model[0][0]);
+	}
+	else
+	{
+		std::cout << "Could not find u_ModelMatrix, maybe a mispelling?\n";
+		exit(EXIT_FAILURE);
+	}
 
-    // Update the View Matrix
-    GLint u_ViewMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram,"u_ViewMatrix");
-    if(u_ViewMatrixLocation>=0){
-        glm::mat4 viewMatrix = gCamera.GetViewMatrix();
-        glUniformMatrix4fv(u_ViewMatrixLocation,1,GL_FALSE,&viewMatrix[0][0]);
-    }else{
-        std::cout << "Could not find u_ModelMatrix, maybe a mispelling?\n";
-        exit(EXIT_FAILURE);
-    }
+	// Update the View Matrix
+	GLint u_ViewMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ViewMatrix");
+	if (u_ViewMatrixLocation >= 0)
+	{
+		glm::mat4 viewMatrix = gCamera.GetViewMatrix();
+		glUniformMatrix4fv(u_ViewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+	}
+	else
+	{
+		std::cout << "Could not find u_ModelMatrix, maybe a mispelling?\n";
+		exit(EXIT_FAILURE);
+	}
 
-    // Projection matrix (in perspective) 
-    glm::mat4 perspective = glm::perspective(glm::radians(45.0f),
-                                             (float)gScreenWidth/(float)gScreenHeight,
-                                             0.1f,
-                                             10.0f);
+	// Projection matrix (in perspective)
+	float farPlane = 100.0f; // Set the desired view distance (far plane)
+	glm::mat4 perspective = glm::perspective(glm::radians(45.0f),
+											 (float)gScreenWidth / (float)gScreenHeight,
+											 0.1f,
+											 farPlane);
 
-    // Retrieve our location of our perspective matrix uniform 
-    GLint u_ProjectionLocation= glGetUniformLocation( gGraphicsPipelineShaderProgram,"u_Projection");
-    if (u_ProjectionLocation>=0) {
-        glUniformMatrix4fv(u_ProjectionLocation,1,GL_FALSE,&perspective[0][0]);
-    } else {
-        std::cout << "Could not find u_Perspective, maybe a mispelling?\n";
-        exit(EXIT_FAILURE);
-    }
-	
+	// Retrieve our location of our perspective matrix uniform
+	GLint u_ProjectionLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_Projection");
+	if (u_ProjectionLocation >= 0)
+	{
+		glUniformMatrix4fv(u_ProjectionLocation, 1, GL_FALSE, &perspective[0][0]);
+	}
+	else
+	{
+		std::cout << "Could not find u_Perspective, maybe a mispelling?\n";
+		exit(EXIT_FAILURE);
+	}
+
 	/*
-	
+
 	// Bind our texture to slot number 0
 	gTexture.Bind(0);
 
@@ -479,7 +493,7 @@ void PreDraw()
 		glUniform1i(u_textureLocation,0);
 	} else {
 		std::cout << "Could not find u_DiffuseTexture, maybe a misspelling?" << std::endl;
-    	exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	}
 	*/
 }
@@ -502,7 +516,7 @@ void Draw(Chunk &chunk)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
-	
+
 	// Enable our attributes
 	glBindVertexArray(gVertexArrayObject);
 
@@ -560,49 +574,62 @@ void Input()
 		{
 			switch (e.key.keysym.sym)
 			{
-				case SDLK_t:
-					drawType = !drawType;
-					break;
-				default:
-					// Unused key pressed
-					break;
+			case SDLK_t:
+				drawType = !drawType;
+				break;
+			default:
+				// Unused key pressed
+				break;
 			}
+		}
+		else if (e.type == SDL_MOUSEWHEEL)
+		{
+			int scrollY = e.wheel.y;
+			gCamera.MoveUp(scrollY * 0.1f);
 		}
 
 		// Retrieve keyboard state
-    	const Uint8 *state = SDL_GetKeyboardState(NULL);
-    	if (state[SDL_SCANCODE_UP]) {
-    	    g_uOffset+=0.01f;
-    	}
-    	if (state[SDL_SCANCODE_DOWN]) {
-    	    g_uOffset-=0.01f;
-    	}
-    	if (state[SDL_SCANCODE_LEFT]) {
-    	    g_uRotate-=1.0f;
-    	}
-    	if (state[SDL_SCANCODE_RIGHT]) {
-    	    g_uRotate+=1.0f;
-    	}
+		const Uint8 *state = SDL_GetKeyboardState(NULL);
+		if (state[SDL_SCANCODE_UP])
+		{
+			g_uOffset += 0.01f;
+		}
+		if (state[SDL_SCANCODE_DOWN])
+		{
+			g_uOffset -= 0.01f;
+		}
+		if (state[SDL_SCANCODE_LEFT])
+		{
+			g_uRotate -= 1.0f;
+		}
+		if (state[SDL_SCANCODE_RIGHT])
+		{
+			g_uRotate += 1.0f;
+		}
 
-    	// Camera
-    	// Update our position of the camera
-    	if (state[SDL_SCANCODE_W]) {
-     	   gCamera.MoveForward(0.1f);
-    	}
-    	if (state[SDL_SCANCODE_S]) {
-    	    gCamera.MoveBackward(0.1f);
-    	}
-    	if (state[SDL_SCANCODE_A]) {
-    	    gCamera.MoveLeft(0.1f);
-    	}
-    	if (state[SDL_SCANCODE_D]) {
-    	    gCamera.MoveRight(0.1f);
-    	}
-    	// Update the mouse look of the camera
-    	// Center the mouse in the window
-   	 	int mouseX, mouseY;
-   	 	SDL_GetGlobalMouseState(&mouseX,&mouseY);
-   	 	gCamera.MouseLook(mouseX,mouseY);
+		// Camera
+		// Update our position of the camera
+		if (state[SDL_SCANCODE_W])
+		{
+			gCamera.MoveForward(0.1f);
+		}
+		if (state[SDL_SCANCODE_S])
+		{
+			gCamera.MoveBackward(0.1f);
+		}
+		if (state[SDL_SCANCODE_A])
+		{
+			gCamera.MoveLeft(0.1f);
+		}
+		if (state[SDL_SCANCODE_D])
+		{
+			gCamera.MoveRight(0.1f);
+		}
+		// Update the mouse look of the camera
+		// Center the mouse in the window
+		int mouseX, mouseY;
+		SDL_GetGlobalMouseState(&mouseX, &mouseY);
+		gCamera.MouseLook(mouseX, mouseY);
 	}
 }
 
@@ -614,7 +641,7 @@ void Input()
  */
 void MainLoop(Chunk &chunk)
 {
-	SDL_WarpMouseInWindow(gGraphicsApplicationWindow, 640/2,480/2);
+	SDL_WarpMouseInWindow(gGraphicsApplicationWindow, 640 / 2, 480 / 2);
 
 	// While application is running
 	while (!gQuit)
