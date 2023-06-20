@@ -1,14 +1,14 @@
 #include "Chunk.hpp"
 #include <iostream>
-#include "PerlinNoise.hpp"
 
-Chunk::Chunk()
+Chunk::Chunk() {
+
+}
+
+Chunk::Chunk(const siv::PerlinNoise perlin)
 {
     // Initialize the m_Blocks vector
     m_Blocks.resize(CHUNK_SIZE, std::vector<std::vector<Block>>(CHUNK_SIZE, std::vector<Block>(CHUNK_SIZE)));
-    const siv::PerlinNoise::seed_type seed = 123456u;
-
-    const siv::PerlinNoise perlin{seed};
     // Iterate over x, y, z coordinates to initialize each block
     for (int x = 0; x < CHUNK_SIZE; ++x)
     {

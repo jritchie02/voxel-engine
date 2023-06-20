@@ -25,11 +25,12 @@ public:
     ~Block();
     bool IsActive();
     void SetActive(bool active);
+    glm::vec3 m_position;
     
 private:
     bool m_active;
     BlockType m_blockType;
-    glm::vec3 m_position;
+    
 };
 
 #endif /* BLOCK_HPP*/

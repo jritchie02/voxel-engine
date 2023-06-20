@@ -4,11 +4,13 @@
 #include <vector>
 #include <glad/glad.h>
 #include "Block.hpp"
+#include "PerlinNoise.hpp"
 
 class Chunk
 {
 public:
     Chunk();
+    Chunk(const siv::PerlinNoise perlin);
     ~Chunk();
     // void Update(float dt);
     static const int CHUNK_SIZE = 16;

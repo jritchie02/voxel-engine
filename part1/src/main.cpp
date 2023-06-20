@@ -28,7 +28,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Chunk.hpp"
+#include "ChunkManager.hpp"
 #include "Camera.hpp"
 #include "Texture.hpp"
 
@@ -314,15 +314,15 @@ void InitializeProgram()
  *
  * @return void
  */
-void VertexSpecification(Chunk &chunk)
+void VertexSpecification(ChunkManager &chunkManager)
 {
 	std::vector<GLfloat> vertexData;
 
 	// Load the diffuse texture
-	// gTexture.LoadTexture(chunks.at(modelId).get_diffuse_texture());
+	// gTexture.LoadTexture(chunkManager.at(modelId).get_diffuse_texture());
 
 	// Get the vertex data for the model
-	vertexData = chunk.get_vertex_data();
+	vertexData = chunkManager.get_vertex_data();
 
 	std::cout << "vertex data size " << vertexData.size() << std::endl;
 	// Vertex Arrays Object (VAO) Setup
@@ -349,7 +349,7 @@ void VertexSpecification(Chunk &chunk)
 	// Index buffer data for a quad
 	std::vector<GLuint> indexBufferData;
 
-	indexBufferData = chunk.get_index_data();
+	indexBufferData = chunkManager.get_index_data();
 	std::cout << indexBufferData.size() << std::endl;
 
 	glGenBuffers(1, &gIndexBufferObject);
@@ -506,7 +506,7 @@ void PreDraw()
  *
  * @return void
  */
-void Draw(Chunk &chunk)
+void Draw(ChunkManager &chunkManager)
 {
 	if (drawType)
 	{
@@ -527,7 +527,7 @@ void Draw(Chunk &chunk)
 
 	// Render data
 
-	elements = chunk.get_index_data().size();
+	elements = chunkManager.get_index_data().size();
 
 	glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, nullptr);
 
@@ -639,7 +639,7 @@ void Input()
  *
  * @return void
  */
-void MainLoop(Chunk &chunk)
+void MainLoop(ChunkManager &chunkManager)
 {
 	SDL_WarpMouseInWindow(gGraphicsApplicationWindow, 640 / 2, 480 / 2);
 
@@ -652,7 +652,7 @@ void MainLoop(Chunk &chunk)
 		// place before draw calls
 		PreDraw();
 		// Draw Calls in OpenGL
-		Draw(chunk);
+		Draw(chunkManager);
 		// Update screen of our specified window
 		SDL_GL_SwapWindow(gGraphicsApplicationWindow);
 	}
@@ -689,20 +689,20 @@ void CleanUp()
  */
 int main(int argc, char **argv)
 {
-	Chunk chunk = Chunk();
+	ChunkManager chunkManager = ChunkManager();
 
 	// 2. Setup the graphics program
 	InitializeProgram();
 
 	// 3. Setup our geometry
-	VertexSpecification(chunk);
+	VertexSpecification(chunkManager);
 
 	// 4. Create our graphics pipeline
 	// 	- At a minimum, this means the vertex and fragment shader
 	CreateGraphicsPipeline();
 
 	// 5. Call the main application loop
-	MainLoop(chunk);
+	MainLoop(chunkManager);
 
 	// 6. Call the cleanup function when our program terminates
 	CleanUp();
