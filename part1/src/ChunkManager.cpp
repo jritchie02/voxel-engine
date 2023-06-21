@@ -34,25 +34,21 @@ ChunkManager::ChunkManager()
             if (y > 0)
             {
                 chunk->setBackNeighbor(m_ChunkGrid[x][y - 1]);
-                std::cout << "Chunk (" << x << ", " << y << ") left neighbor: (" << x - 1 << ", " << y << ")" << std::endl;
             }
 
             if (y < CHUNK_GRID_SIZE - 1)
             {
                 chunk->setFrontNeighbor(m_ChunkGrid[x][y + 1]);
-                std::cout << "Chunk (" << x << ", " << y << ") right neighbor: (" << x + 1 << ", " << y << ")" << std::endl;
             }
 
             if (x > 0)
             {
                 chunk->setRightNeighbor(m_ChunkGrid[x - 1][y]);
-                std::cout << "Chunk (" << x << ", " << y << ") back neighbor: (" << x << ", " << y - 1 << ")" << std::endl;
             }
 
             if (x < CHUNK_GRID_SIZE - 1)
             {
                 chunk->setLeftNeighbor(m_ChunkGrid[x + 1][y]);
-                std::cout << "Chunk (" << x << ", " << y << ") front neighbor: (" << x << ", " << y + 1 << ")" << std::endl;
             }
         }
     }
@@ -74,7 +70,6 @@ const std::vector<GLfloat> ChunkManager::get_vertex_data()
     {
         for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
         {
-            std::cout << "Chunk vertex data at " << x << " , " << z << std::endl;
             std::vector<GLfloat> chunkVertices = m_ChunkGrid[x][z]->get_vertex_data(x, z);
             vertices.insert(vertices.end(), chunkVertices.begin(), chunkVertices.end());
         }

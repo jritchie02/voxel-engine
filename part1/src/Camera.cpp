@@ -23,27 +23,31 @@ void Camera::MouseLook(int mouseX, int mouseY){
 //               Think about how you can do this for a better camera!
 
 void Camera::MoveForward(float speed){
-    m_eyePosition.z -= speed;
+    m_eyePosition += speed * m_viewDirection;
 }
 
 void Camera::MoveBackward(float speed){
-    m_eyePosition.z += speed;
+    m_eyePosition -= speed * m_viewDirection;
 }
 
 void Camera::MoveLeft(float speed){
-    m_eyePosition.x -= speed;
+    // Calculate the left vector by crossing the view direction with the up vector
+    glm::vec3 leftVector = glm::cross(m_upVector, m_viewDirection);
+    m_eyePosition += speed * leftVector;
 }
 
 void Camera::MoveRight(float speed){
-    m_eyePosition.x += speed;
+    // Calculate the left vector by crossing the view direction with the up vector
+    glm::vec3 leftVector = glm::cross(m_upVector, m_viewDirection);
+    m_eyePosition -= speed * leftVector;
 }
 
 void Camera::MoveUp(float speed){
-    m_eyePosition.y += speed;
+    m_eyePosition += speed * m_upVector;
 }
 
 void Camera::MoveDown(float speed){
-    m_eyePosition.y -= speed;
+    m_eyePosition -= speed * m_upVector;
 }
 
 // Set the position for the camera
