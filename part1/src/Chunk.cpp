@@ -18,12 +18,12 @@ Chunk::Chunk(const siv::PerlinNoise perlin, int xOffset, int zOffset)
             {
                 // Generate terrain using Perlin noise with offsets
                 const double noise = perlin.noise3D_01(
-                    (y * 0.01) + (xOffset * CHUNK_SIZE * 0.01),
-                    (x * 0.01),
-                    (z * 0.01) + (zOffset * CHUNK_SIZE * 0.01));
+                    (y * 0.01),
+                    (x * 0.01) + (xOffset * CHUNK_SIZE * .01),
+                    (z * 0.01) + (zOffset * CHUNK_SIZE * .01));
 
                 // Define the threshold value for terrain generation
-                double threshold = 0.48; // Adjust this value to control the terrain height
+                double threshold = 0.55; // Adjust this value to control the terrain height
 
                 // Create and assign a new block
                 Block block(x, y, z);

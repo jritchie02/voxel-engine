@@ -8,7 +8,7 @@
 class ChunkManager
 {
 public:
-    static const int CHUNK_GRID_SIZE = 2; // Number of chunks in the grid
+    static const int CHUNK_GRID_SIZE = 4; // Number of chunks in the grid
 
     ChunkManager();
     ~ChunkManager();
