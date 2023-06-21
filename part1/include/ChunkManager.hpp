@@ -21,7 +21,7 @@ public:
 
 private:
     // 2D grid of chunks
-    std::vector<std::vector<Chunk>> m_ChunkGrid; 
+    std::vector<std::vector<Chunk*>> m_ChunkGrid;
 
 };
 
