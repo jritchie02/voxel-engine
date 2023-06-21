@@ -14,7 +14,7 @@ ChunkManager::ChunkManager()
         for (int y = 0; y < CHUNK_GRID_SIZE; ++y)
         {
             // Generate terrain using Perlin noise for each chunk
-            Chunk chunk = Chunk(perlin);
+            Chunk chunk = Chunk(perlin, x, y);
 
             // Assign the generated chunk to the chunk grid
             m_ChunkGrid[x][y] = chunk;
@@ -36,9 +36,9 @@ const std::vector<GLfloat> ChunkManager::get_vertex_data()
 
     for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
     {
-        for (int y = 0; y < CHUNK_GRID_SIZE; ++y)
+        for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
         {
-            std::vector<GLfloat> chunkVertices = m_ChunkGrid[x][y].get_vertex_data();
+            std::vector<GLfloat> chunkVertices = m_ChunkGrid[x][z].get_vertex_data(x, z);
             vertices.insert(vertices.end(), chunkVertices.begin(), chunkVertices.end());
         }
     }
@@ -49,12 +49,13 @@ const std::vector<GLfloat> ChunkManager::get_vertex_data()
 const std::vector<GLuint> ChunkManager::get_index_data()
 {
     std::vector<GLuint> indexes;
-
+    GLuint baseIndex = 0;
     for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
     {
         for (int y = 0; y < CHUNK_GRID_SIZE; ++y)
         {
-            std::vector<GLuint> chunkIndexes = m_ChunkGrid[x][y].get_index_data();
+            // pass in the indexCounter to getIndexData to keep count each iteration
+            std::vector<GLuint> chunkIndexes = m_ChunkGrid[x][y].get_index_data(baseIndex);
             indexes.insert(indexes.end(), chunkIndexes.begin(), chunkIndexes.end());
         }
     }

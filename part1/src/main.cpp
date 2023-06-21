@@ -27,7 +27,7 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
+#include <glm/gtc/type_ptr.hpp>
 #include "ChunkManager.hpp"
 #include "Camera.hpp"
 #include "Texture.hpp"
@@ -481,21 +481,18 @@ void PreDraw()
 		exit(EXIT_FAILURE);
 	}
 
-	/*
-
-	// Bind our texture to slot number 0
-	gTexture.Bind(0);
-
-	// Setup our uniform for our texture
-	GLint u_textureLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_DiffuseTexture");
-	if(u_textureLocation>=0){
-		// Setup the slot for the texture
-		glUniform1i(u_textureLocation,0);
-	} else {
-		std::cout << "Could not find u_DiffuseTexture, maybe a misspelling?" << std::endl;
+	// Update the light direction uniform
+	GLint u_LightDirectionLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_LightDirection");
+	if (u_LightDirectionLocation >= 0)
+	{
+		glm::vec3 lightDirection(0.0f, 100.0f, 0.0f);
+		glUniform3fv(u_LightDirectionLocation, 1, glm::value_ptr(lightDirection));
+	}
+	else
+	{
+		std::cout << "Could not find u_LightDirection, maybe a misspelling?\n";
 		exit(EXIT_FAILURE);
 	}
-	*/
 }
 
 /**

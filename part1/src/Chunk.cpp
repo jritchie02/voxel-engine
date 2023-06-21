@@ -1,11 +1,11 @@
 #include "Chunk.hpp"
 #include <iostream>
 
-Chunk::Chunk() {
-
+Chunk::Chunk()
+{
 }
 
-Chunk::Chunk(const siv::PerlinNoise perlin)
+Chunk::Chunk(const siv::PerlinNoise perlin, int xOffset, int zOffset)
 {
     // Initialize the m_Blocks vector
     m_Blocks.resize(CHUNK_SIZE, std::vector<std::vector<Block>>(CHUNK_SIZE, std::vector<Block>(CHUNK_SIZE)));
@@ -16,12 +16,15 @@ Chunk::Chunk(const siv::PerlinNoise perlin)
         {
             for (int z = 0; z < CHUNK_SIZE; ++z)
             {
-                // Generate terrain using Perlin noise
-                const double noise = perlin.noise3D_01((y * 0.01), (x * 0.01), (z * 0.01));
+                // Generate terrain using Perlin noise with offsets
+                const double noise = perlin.noise3D_01(
+                    (y * 0.01) + (xOffset * CHUNK_SIZE * 0.01),
+                    (x * 0.01),
+                    (z * 0.01) + (zOffset * CHUNK_SIZE * 0.01));
 
                 // Define the threshold value for terrain generation
                 double threshold = 0.48; // Adjust this value to control the terrain height
-                
+
                 // Create and assign a new block
                 Block block(x, y, z);
                 m_Blocks[x][y][z] = block;
@@ -39,9 +42,12 @@ Chunk::~Chunk()
 {
 }
 
-const std::vector<GLfloat> Chunk::get_vertex_data()
+const std::vector<GLfloat> Chunk::get_vertex_data(int xOffset, int zOffset)
 {
     std::vector<GLfloat> vertices;
+
+    xOffset = xOffset * CHUNK_SIZE * BLOCK_SIZE;
+    zOffset = zOffset * CHUNK_SIZE * BLOCK_SIZE;
 
     // Iterate over the blocks in the chunk
     for (int x = 0; x < CHUNK_SIZE; x++)
@@ -53,7 +59,7 @@ const std::vector<GLfloat> Chunk::get_vertex_data()
                 Block currBlock = m_Blocks[x][y][z];
                 if (currBlock.IsActive())
                 {
-                    std::vector<GLfloat> cubeVertices = generateCubeVertices(x, y, z);
+                    std::vector<GLfloat> cubeVertices = generateCubeVertices(x, y, z, xOffset, zOffset);
                     vertices.insert(vertices.end(), cubeVertices.begin(), cubeVertices.end());
                 }
             }
@@ -63,12 +69,12 @@ const std::vector<GLfloat> Chunk::get_vertex_data()
     return vertices;
 }
 
-std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
+std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffset, int zOffset)
 {
     // Calculate the half size of the cube
     float halfSize = BLOCK_SIZE * 0.5f;
 
-    glm::vec3 blockPosition(x * BLOCK_SIZE, y * BLOCK_SIZE, z * BLOCK_SIZE);
+    glm::vec3 blockPosition((x * BLOCK_SIZE) + xOffset, y * BLOCK_SIZE, (z * BLOCK_SIZE) + zOffset);
 
     // Define the color for the block based on the block type
     std::vector<GLfloat> color = {0.0f, 1.0f, 0.0f}; // Green
@@ -151,6 +157,29 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z)
     return vertices;
 }
 
+const std::vector<GLuint> Chunk::get_index_data(GLuint &baseIndex)
+{
+    std::vector<GLuint> indices;
+
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                Block currBlock = m_Blocks[x][y][z];
+                if (currBlock.IsActive())
+                {
+                    std::vector<GLuint> blockIndices = generateBlockIndices(baseIndex, x, y, z);
+                    indices.insert(indices.end(), blockIndices.begin(), blockIndices.end());
+                }
+            }
+        }
+    }
+
+    return indices;
+}
+
 void Chunk::addFace(std::vector<GLuint> &indices, GLuint &baseIndex)
 {
     indices.insert(indices.end(), {
@@ -198,30 +227,6 @@ std::vector<GLuint> Chunk::generateBlockIndices(GLuint &baseIndex, int x, int y,
     if (!hasNeighborOnFace(x, y, z, 0, -1, 0))
     {
         addFace(indices, baseIndex);
-    }
-
-    return indices;
-}
-
-const std::vector<GLuint> Chunk::get_index_data()
-{
-    std::vector<GLuint> indices;
-    GLuint baseIndex = 0;
-
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int y = 0; y < CHUNK_SIZE; y++)
-        {
-            for (int z = 0; z < CHUNK_SIZE; z++)
-            {
-                Block currBlock = m_Blocks[x][y][z];
-                if (currBlock.IsActive())
-                {
-                    std::vector<GLuint> blockIndices = generateBlockIndices(baseIndex, x, y, z);
-                    indices.insert(indices.end(), blockIndices.begin(), blockIndices.end());
-                }
-            }
-        }
     }
 
     return indices;
