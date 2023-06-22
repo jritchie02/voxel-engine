@@ -1,6 +1,4 @@
-*TODO*: Please edit the following information in your final project
-
-## Title: Edit this line -- Put your 'title' of your project here
+## Title: Voxel Engine 
 
 ## YouTube/Dropbox/Drive Link: Edit this line -- Put your link to your video(Preferably on YouTube) here (see deliverables).
 
@@ -8,16 +6,15 @@
 
 
 * Name and partners name(At most teams of 2 folks total)
-  * Team member 1: *edit this*
-  * Team member 2: *edit this*
-* How many hours did it take you to complete this final project? 
+  * Team member 1: Jared Ritchie
+* How many hours did it take you to complete this final project?
+  * 20 - 22 hours
 * Did you collaborate or share ideas with any other students/TAs/Professors?
+  * Yes, I did collaborate with Colan (TA) in office hours
 * Did you use any external resources? 
   * Note it is fair to utilize some tutorials--cite them here. You **must** add your own personal touch however!
-  * *edit this*
-  * *edit this*
-  * *edit this*
-  * (Optional) What was the most interesting part of the Final Assignment? How could the instructor improve the final project?
+  * The starter code for my project was based on HW4. I used this for the main.cpp file structure and as a starting point for the camera
+  * https://sites.google.com/site/letsmakeavoxelengine/home/basic-block-rendering?authuser=0 This website/blog was also used to help me understand some of the voxel engine concepts at high level. The header files for Chunk and Block representations were inspired from this source
 
 ### Rubric
 
