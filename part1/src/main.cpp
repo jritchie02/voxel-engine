@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <cmath>
 #include <map>
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -30,14 +31,13 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "ChunkManager.hpp"
 #include "Camera.hpp"
-#include "Texture.hpp"
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvv Globals vvvvvvvvvvvvvvvvvvvvvvvvvv
 // Globals generally are prefixed with 'g' in this application.
 
 // Screen Dimensions
-int gScreenWidth = 640;
-int gScreenHeight = 480;
+int gScreenWidth = 1280;
+int gScreenHeight = 960;
 SDL_Window *gGraphicsApplicationWindow = nullptr;
 SDL_GLContext gOpenGLContext = nullptr;
 
@@ -78,8 +78,6 @@ float g_uRotate = 0.0f;
 
 // Camera
 Camera gCamera;
-// Texture
-Texture gTexture;
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^ Globals ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -324,7 +322,7 @@ void VertexSpecification(ChunkManager &chunkManager)
 	// Get the vertex data for the model
 	vertexData = chunkManager.get_vertex_data();
 
-	std::cout << "vertex data size " << vertexData.size() << std::endl;
+	//std::cout << "vertex data size " << vertexData.size() << std::endl;
 	// Vertex Arrays Object (VAO) Setup
 	glGenVertexArrays(1, &gVertexArrayObject);
 	// We bind (i.e. select) to the Vertex Array Object (VAO) that we want to work withn.
@@ -350,7 +348,7 @@ void VertexSpecification(ChunkManager &chunkManager)
 	std::vector<GLuint> indexBufferData;
 
 	indexBufferData = chunkManager.get_index_data();
-	std::cout << indexBufferData.size() << std::endl;
+	//std::cout << indexBufferData.size() << std::endl;
 
 	glGenBuffers(1, &gIndexBufferObject);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIndexBufferObject);
@@ -383,20 +381,6 @@ void VertexSpecification(ChunkManager &chunkManager)
 						  sizeof(GL_FLOAT) * 6,
 						  (GLvoid *)(sizeof(GL_FLOAT) * 3));
 
-	/*
-
-	// Now linking up the attributes in our VAO
-	// Texture :information
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2,
-						  2, // s,t
-						  GL_FLOAT,
-						  GL_FALSE,
-						  sizeof(GL_FLOAT)*8,
-						  (GLvoid*)(sizeof(GL_FLOAT)*6)
-			);
-*/
-
 	// Unbind our currently bound Vertex Array Object
 	glBindVertexArray(0);
 
@@ -404,7 +388,6 @@ void VertexSpecification(ChunkManager &chunkManager)
 	// as we do not want to leave them open.
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	// glDisableVertexAttribArray(2);
 }
 
 /**
@@ -417,9 +400,9 @@ void VertexSpecification(ChunkManager &chunkManager)
 void PreDraw()
 {
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_FRONT);  
-	
+	// glEnable(GL_CULL_FACE);
+	// glCullFace(GL_FRONT);
+
 	// Initialize clear color
 	// This is the background of the screen.
 	glViewport(0, 0, gScreenWidth, gScreenHeight);
@@ -520,11 +503,7 @@ void Draw(ChunkManager &chunkManager)
 	// Select the vertex buffer object we want to enable
 	glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
 
-	int elements = 0;
-
-	// Render data
-
-	elements = chunkManager.get_index_data().size();
+	int elements = chunkManager.get_index_data().size();
 
 	glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, nullptr);
 
@@ -551,7 +530,7 @@ void getOpenGLVersionInfo()
  *
  * @return void
  */
-void Input()
+void Input(ChunkManager &chunkManager)
 {
 	// Event handler that handles various events in SDL
 	// that are related to input and output
@@ -567,13 +546,15 @@ void Input()
 			std::cout << "Goodbye! (Leaving MainApplicationLoop())" << std::endl;
 			gQuit = true;
 		}
-		if (e.type == SDL_KEYDOWN)
+		else if (e.type == SDL_KEYDOWN)
 		{
 			switch (e.key.keysym.sym)
 			{
 			case SDLK_t:
 				drawType = !drawType;
 				break;
+			case SDLK_q:
+				gQuit = true;
 			default:
 				// Unused key pressed
 				break;
@@ -583,6 +564,17 @@ void Input()
 		{
 			int scrollY = e.wheel.y;
 			gCamera.MoveUp(scrollY * 0.1f);
+		}
+		else if (e.type == SDL_MOUSEBUTTONDOWN)
+		{
+			int cameraX = floor(gCamera.GetEyeXPosition());
+			int cameraY = floor(gCamera.GetEyeYPosition());
+			int cameraZ = floor(gCamera.GetEyeZPosition());
+
+			std::cout << "Camera position " << cameraX << ", " << cameraY << ", " << cameraZ << std::endl;
+
+			chunkManager.UpdateChunks(cameraX, cameraY, cameraZ);
+			VertexSpecification(chunkManager);
 		}
 
 		// Retrieve keyboard state
@@ -622,12 +614,12 @@ void Input()
 		{
 			gCamera.MoveRight(0.1f);
 		}
+
 		// Update the mouse look of the camera
 		// Center the mouse in the window
 		int mouseX, mouseY;
 		SDL_GetGlobalMouseState(&mouseX, &mouseY);
 		gCamera.MouseLook(mouseX, mouseY);
-		
 	}
 }
 
@@ -645,7 +637,7 @@ void MainLoop(ChunkManager &chunkManager)
 	while (!gQuit)
 	{
 		// Handle Input
-		Input();
+		Input(chunkManager);
 		// Setup anything (i.e. OpenGL State) that needs to take
 		// place before draw calls
 		PreDraw();

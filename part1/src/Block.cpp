@@ -7,13 +7,6 @@ Block::Block()
     m_blockType = BlockType_Grass;
 }
 
-Block::Block(int x, int y, int z)
-{
-    m_position = glm::vec3(x, y, z);
-    m_blockType = BlockType_Grass;
-    m_active = true;
-}
-
 Block::~Block()
 {
 }

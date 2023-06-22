@@ -9,7 +9,7 @@ void Camera::MouseLook(int mouseX, int mouseY){
     glm::vec2 newMousePosition(mouseX, mouseY);
     // Detect how much the mouse has moved since
     // the last time
-    glm::vec2 mouseDelta = 0.01f*(newMousePosition-m_oldMousePosition);
+    glm::vec2 mouseDelta = 0.01f * (newMousePosition-m_oldMousePosition);
 
     m_viewDirection = glm::mat3(glm::rotate(-mouseDelta.x, m_upVector)) * m_viewDirection;
     
@@ -22,11 +22,11 @@ void Camera::MouseLook(int mouseX, int mouseY){
 //               updating the eye position along the m_viewDirection.
 //               Think about how you can do this for a better camera!
 
-void Camera::MoveForward(float speed){
+void Camera::MoveForward(float speed) {
     m_eyePosition += speed * m_viewDirection;
 }
 
-void Camera::MoveBackward(float speed){
+void Camera::MoveBackward(float speed) {
     m_eyePosition -= speed * m_viewDirection;
 }
 
@@ -57,16 +57,16 @@ void Camera::SetCameraEyePosition(float x, float y, float z){
     m_eyePosition.z = z;
 }
 
-float Camera::GetEyeXPosition(){
+float Camera::GetEyeXPosition() {
     return m_eyePosition.x;
 }
 
-float Camera::GetEyeYPosition(){
+float Camera::GetEyeYPosition() {
     return m_eyePosition.y;
 }
 
-float Camera::GetEyeZPosition(){
-    return m_eyePosition.z;
+float Camera::GetEyeZPosition() {
+    return -m_eyePosition.z;
 }
 
 float Camera::GetViewXDirection(){
@@ -88,7 +88,7 @@ Camera::Camera(){
     m_eyePosition = glm::vec3(0.0f,0.0f, 0.0f);
 	// Looking down along the z-axis initially.
 	// Remember, this is negative because we are looking 'into' the scene.
-    m_viewDirection = glm::vec3(0.0f,0.0f, -1.0f);
+    m_viewDirection = glm::vec3(0.0f, 0.0f, -1.0f);
 	// For now--our upVector always points up along the y-axis
     m_upVector = glm::vec3(0.0f, 1.0f, 0.0f);
 }

@@ -92,6 +92,26 @@ const std::vector<GLuint> ChunkManager::get_index_data()
     return m_indexes;
 }
 
-void ChunkManager::UpdateChunks(float dt)
+void ChunkManager::UpdateChunks(int x, int y, int z)
 {
+    bool blockUpdated = false; 
+
+    for (int j = 0; j < CHUNK_GRID_SIZE; ++j)
+    {
+        for (int m = 0; m < CHUNK_GRID_SIZE; ++m)
+        {
+            if (m_ChunkGrid[j][m]->isInBounds(x, y, z))
+            {
+                std::cout << "In Chunk " << j << ", " << m << std::endl;
+                m_ChunkGrid[j][m]->updateBlock(x, y, z, false);
+                blockUpdated = true;
+                break;
+            }
+        }
+        
+        if (blockUpdated)
+        {
+            break;  // Break out of the upper for loop
+        }
+    }
 }

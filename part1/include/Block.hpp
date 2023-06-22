@@ -10,23 +10,19 @@ enum BlockType
     BlockType_Default = 0,
     BlockType_Grass,
     BlockType_Dirt,
-    BlockType_Water,
-    BlockType_Stone,
-    BlockType_Wood,
-    BlockType_Sand,
-    BlockType_NumTypes,
 };
 
 class Block
 {
-
 public:
+    // Constructors/Destructors
     Block();
     Block(int x, int y, int z);
     ~Block();
+
+    // Methods
     bool IsActive();
     void SetActive(bool active);
-    glm::vec3 m_position;
     BlockType getType();
 
 private:
