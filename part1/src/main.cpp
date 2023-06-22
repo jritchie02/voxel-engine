@@ -417,9 +417,9 @@ void VertexSpecification(ChunkManager &chunkManager)
 void PreDraw()
 {
 	glEnable(GL_DEPTH_TEST);
-	// Enable texture mapping
-	// glEnable(GL_TEXTURE_2D);
-
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT);  
+	
 	// Initialize clear color
 	// This is the background of the screen.
 	glViewport(0, 0, gScreenWidth, gScreenHeight);
@@ -485,7 +485,7 @@ void PreDraw()
 	GLint u_LightDirectionLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_LightDirection");
 	if (u_LightDirectionLocation >= 0)
 	{
-		glm::vec3 lightDirection(0.0f, 100.0f, 0.0f);
+		glm::vec3 lightDirection(0.0f, -1.0f, 0.0f);
 		glUniform3fv(u_LightDirectionLocation, 1, glm::value_ptr(lightDirection));
 	}
 	else
@@ -627,6 +627,7 @@ void Input()
 		int mouseX, mouseY;
 		SDL_GetGlobalMouseState(&mouseX, &mouseY);
 		gCamera.MouseLook(mouseX, mouseY);
+		
 	}
 }
 

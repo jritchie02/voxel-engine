@@ -12,8 +12,11 @@ out vec4 color;
 void main()
 {
     // Calculate the dot product between the light direction and the surface normal
-    float diffuse = max(dot(normalize(v_normal), normalize(u_LightDirection)), 0.05);
+    float diffuse = max(dot(normalize(v_normal), normalize(u_LightDirection)), 0.0);
+    float diffuseDirection = max(dot(normalize(v_normal), vec3(0.0f, 2.0f, 0.0f)), 0.0);
+
+    float diffuseResult = (.5 * diffuse + diffuseDirection * .5) + .15f;
 
     // Apply the diffuse color and intensity to the fragment color
-    color = vec4(v_vertexColors * diffuse, 1.0);
+    color = vec4(v_vertexColors * diffuseResult, 1.0);
 }
