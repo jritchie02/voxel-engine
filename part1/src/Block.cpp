@@ -27,3 +27,7 @@ void Block::SetActive(bool isActive)
 {
     m_active = isActive;
 }
+
+BlockType Block::getType() {
+    return m_blockType;
+}

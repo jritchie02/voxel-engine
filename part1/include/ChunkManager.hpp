@@ -8,7 +8,7 @@
 class ChunkManager
 {
 public:
-    static const int CHUNK_GRID_SIZE = 4; // Number of chunks in the grid
+    static const int CHUNK_GRID_SIZE = 1; // Number of chunks in the grid
 
     ChunkManager();
     ~ChunkManager();
@@ -22,6 +22,7 @@ public:
 private:
     // 2D grid of chunks
     std::vector<std::vector<Chunk*>> m_ChunkGrid;
+    std::vector<GLuint> m_indexes;
 
 };
 

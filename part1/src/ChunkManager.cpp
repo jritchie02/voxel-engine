@@ -56,6 +56,13 @@ ChunkManager::ChunkManager()
 
 ChunkManager::~ChunkManager()
 {
+    for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
+    {
+        for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
+        {
+            delete m_ChunkGrid[x][z];
+        }
+    }
 }
 
 void ChunkManager::GenerateChunks()
@@ -65,12 +72,13 @@ void ChunkManager::GenerateChunks()
 const std::vector<GLfloat> ChunkManager::get_vertex_data()
 {
     std::vector<GLfloat> vertices;
+    GLuint baseIndex = 0;
 
     for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
     {
         for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
         {
-            std::vector<GLfloat> chunkVertices = m_ChunkGrid[x][z]->get_vertex_data(x, z);
+            std::vector<GLfloat> chunkVertices = m_ChunkGrid[x][z]->get_vertex_data(x, z, m_indexes, baseIndex);
             vertices.insert(vertices.end(), chunkVertices.begin(), chunkVertices.end());
         }
     }
@@ -80,25 +88,9 @@ const std::vector<GLfloat> ChunkManager::get_vertex_data()
 
 const std::vector<GLuint> ChunkManager::get_index_data()
 {
-    std::vector<GLuint> indexes;
-    GLuint baseIndex = 0;
-    for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
-    {
-        for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
-        {
-            // pass in the indexCounter to getIndexData to keep count each iteration
-            std::vector<GLuint> chunkIndexes = m_ChunkGrid[x][z]->get_index_data(baseIndex);
-            indexes.insert(indexes.end(), chunkIndexes.begin(), chunkIndexes.end());
-        }
-    }
 
-    return indexes;
+    return m_indexes;
 }
-
-// void ChunkManager::RenderChunks()
-//{
-//
-// }
 
 void ChunkManager::UpdateChunks(float dt)
 {

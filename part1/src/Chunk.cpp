@@ -23,7 +23,7 @@ Chunk::Chunk(const siv::PerlinNoise perlin, int xOffset, int zOffset)
                     (z * 0.01) + (zOffset * CHUNK_SIZE * .01));
 
                 // Define the threshold value for terrain generation
-                double threshold = 0.55; // Adjust this value to control the terrain height
+                double threshold = 0.1; // Adjust this value to control the terrain height
 
                 // Create and assign a new block
                 Block block(x, y, z);
@@ -64,7 +64,7 @@ void Chunk::setRightNeighbor(Chunk *chunk)
     m_rightNeighbor = chunk;
 }
 
-const std::vector<GLfloat> Chunk::get_vertex_data(int xOffset, int zOffset)
+const std::vector<GLfloat> Chunk::get_vertex_data(int xOffset, int zOffset, std::vector<GLuint> &indices, GLuint &baseIndex)
 {
     std::vector<GLfloat> vertices;
 
@@ -81,7 +81,7 @@ const std::vector<GLfloat> Chunk::get_vertex_data(int xOffset, int zOffset)
                 Block currBlock = m_Blocks[x][y][z];
                 if (currBlock.IsActive())
                 {
-                    std::vector<GLfloat> cubeVertices = generateCubeVertices(x, y, z, xOffset, zOffset);
+                    std::vector<GLfloat> cubeVertices = generateCubeVertices(x, y, z, xOffset, zOffset, indices, baseIndex);
                     vertices.insert(vertices.end(), cubeVertices.begin(), cubeVertices.end());
                 }
             }
@@ -91,7 +91,7 @@ const std::vector<GLfloat> Chunk::get_vertex_data(int xOffset, int zOffset)
     return vertices;
 }
 
-std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffset, int zOffset)
+std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffset, int zOffset, std::vector<GLuint> &indices, GLuint &baseIndex)
 {
     // Calculate the half size of the cube
     float halfSize = BLOCK_SIZE * 0.5f;
@@ -100,10 +100,10 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffse
 
     // Define the color for the block based on the block type
     std::vector<GLfloat> color = {0.0f, 1.0f, 0.0f}; // Green
-    std::vector<GLfloat> colorFront = {1.0f, 0.0f, 0.0f}; 
-    std::vector<GLfloat> colorRight = {0.0f, 0.0f, 1.0f}; 
-    std::vector<GLfloat> colorLeft = {1.0f, 0.0f, 1.0f}; 
-    std::vector<GLfloat> colorBack = {0.4f, 0.4f, 0.4f}; 
+    std::vector<GLfloat> colorFront = {1.0f, 0.0f, 0.0f};
+    std::vector<GLfloat> colorRight = {0.0f, 0.0f, 1.0f};
+    std::vector<GLfloat> colorLeft = {1.0f, 0.0f, 1.0f};
+    std::vector<GLfloat> colorBack = {0.4f, 0.4f, 0.4f};
     // Calculate the coordinates of the cube's vertices based on the block position
     std::vector<GLfloat> vertices;
 
@@ -117,6 +117,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffse
                                             blockPosition.x + halfSize, blockPosition.y - halfSize, blockPosition.z + halfSize, colorFront[0], colorFront[1], colorFront[2], // Vertex 2
                                             blockPosition.x - halfSize, blockPosition.y - halfSize, blockPosition.z + halfSize, colorFront[0], colorFront[1], colorFront[2]  // Vertex 3
                                         });
+        addFace(indices, baseIndex);
     }
 
     // Back face
@@ -129,6 +130,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffse
                                             blockPosition.x - halfSize, blockPosition.y - halfSize, blockPosition.z - halfSize, colorBack[0], colorBack[1], colorBack[2], // Vertex 6
                                             blockPosition.x + halfSize, blockPosition.y - halfSize, blockPosition.z - halfSize, colorBack[0], colorBack[1], colorBack[2]  // Vertex 7
                                         });
+        addFace(indices, baseIndex);
     }
 
     // Left face
@@ -136,11 +138,12 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffse
     {
         // std::cout << "Adding left face" << std::endl;
         vertices.insert(vertices.end(), {
-                                            blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, colorLeft[0], colorLeft[1], colorLeft[2], // Vertex 8
-                                            blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, colorLeft[0], colorLeft[1], colorLeft[2], // Vertex 9
+                                            blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z - halfSize, colorLeft[0], colorLeft[1], colorLeft[2],  // Vertex 8
+                                            blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, colorLeft[0], colorLeft[1], colorLeft[2],  // Vertex 9
                                             blockPosition.x - halfSize, blockPosition.y - halfSize, blockPosition.z + halfSize, colorLeft[0], colorLeft[1], colorLeft[2], // Vertex 10
                                             blockPosition.x - halfSize, blockPosition.y - halfSize, blockPosition.z - halfSize, colorLeft[0], colorLeft[1], colorLeft[2]  // Vertex 11
                                         });
+        addFace(indices, baseIndex);
     }
 
     // Right face
@@ -153,6 +156,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffse
                                             blockPosition.x + halfSize, blockPosition.y - halfSize, blockPosition.z - halfSize, colorRight[0], colorRight[1], colorRight[2], // Vertex 14
                                             blockPosition.x + halfSize, blockPosition.y - halfSize, blockPosition.z + halfSize, colorRight[0], colorRight[1], colorRight[2]  // Vertex 15
                                         });
+        addFace(indices, baseIndex);
     }
 
     // Top face
@@ -165,6 +169,7 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffse
                                             blockPosition.x + halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, color[0], color[1], color[2], // Vertex 18
                                             blockPosition.x - halfSize, blockPosition.y + halfSize, blockPosition.z + halfSize, color[0], color[1], color[2]  // Vertex 19
                                         });
+        addFace(indices, baseIndex);
     }
 
     // Bottom face
@@ -177,32 +182,10 @@ std::vector<GLfloat> Chunk::generateCubeVertices(int x, int y, int z, int xOffse
                                             blockPosition.x + halfSize, blockPosition.y - halfSize, blockPosition.z - halfSize, color[0], color[1], color[2], // Vertex 22
                                             blockPosition.x - halfSize, blockPosition.y - halfSize, blockPosition.z - halfSize, color[0], color[1], color[2]  // Vertex 23
                                         });
+        addFace(indices, baseIndex);
     }
 
     return vertices;
-}
-
-const std::vector<GLuint> Chunk::get_index_data(GLuint &baseIndex)
-{
-    std::vector<GLuint> indices;
-
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int y = 0; y < CHUNK_SIZE; y++)
-        {
-            for (int z = 0; z < CHUNK_SIZE; z++)
-            {
-                Block currBlock = m_Blocks[x][y][z];
-                if (currBlock.IsActive())
-                {
-                    std::vector<GLuint> blockIndices = generateBlockIndices(baseIndex, x, y, z);
-                    indices.insert(indices.end(), blockIndices.begin(), blockIndices.end());
-                }
-            }
-        }
-    }
-
-    return indices;
 }
 
 void Chunk::addFace(std::vector<GLuint> &indices, GLuint &baseIndex)
@@ -212,49 +195,6 @@ void Chunk::addFace(std::vector<GLuint> &indices, GLuint &baseIndex)
                                       baseIndex + 2, baseIndex + 3, baseIndex  // Triangle 2
                                   });
     baseIndex += 4;
-}
-
-std::vector<GLuint> Chunk::generateBlockIndices(GLuint &baseIndex, int x, int y, int z)
-{
-    std::vector<GLuint> indices;
-
-    // Front face
-    if (!hasNeighborOnFace(x, y, z, 0, 0, 1))
-    {
-        addFace(indices, baseIndex);
-    }
-
-    // Back face
-    if (!hasNeighborOnFace(x, y, z, 0, 0, -1))
-    {
-        addFace(indices, baseIndex);
-    }
-
-    // Left face
-    if (!hasNeighborOnFace(x, y, z, -1, 0, 0))
-    {
-        addFace(indices, baseIndex);
-    }
-
-    // Right face
-    if (!hasNeighborOnFace(x, y, z, 1, 0, 0))
-    {
-        addFace(indices, baseIndex);
-    }
-
-    // Top face
-    if (!hasNeighborOnFace(x, y, z, 0, 1, 0))
-    {
-        addFace(indices, baseIndex);
-    }
-
-    // Bottom face
-    if (!hasNeighborOnFace(x, y, z, 0, -1, 0))
-    {
-        addFace(indices, baseIndex);
-    }
-
-    return indices;
 }
 
 bool Chunk::hasNeighborOnFace(int x, int y, int z, int offsetX, int offsetY, int offsetZ)
@@ -275,12 +215,12 @@ bool Chunk::hasNeighborOnFace(int x, int y, int z, int offsetX, int offsetY, int
     // Check neighboring chunks if the position is on an edge case
     if (neighborX < 0 && m_rightNeighbor != nullptr)
     {
-        return m_rightNeighbor->getBlock(CHUNK_SIZE - 1, neighborY, neighborZ )->IsActive();
+        return m_rightNeighbor->getBlock(CHUNK_SIZE - 1, neighborY, neighborZ)->IsActive();
     }
 
     else if (neighborX >= CHUNK_SIZE && m_leftNeighbor != nullptr)
     {
-        return m_leftNeighbor->getBlock(0, neighborY, neighborZ )->IsActive();
+        return m_leftNeighbor->getBlock(0, neighborY, neighborZ)->IsActive();
     }
 
     if (neighborZ < 0 && m_backNeighbor != nullptr)
