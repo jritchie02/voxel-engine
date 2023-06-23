@@ -322,8 +322,8 @@ void VertexSpecification(ChunkManager &chunkManager)
 	// Get the vertex data for the model
 	vertexData = chunkManager.get_vertex_data();
 
-	//std::cout << "vertex data size " << vertexData.size() << std::endl;
-	// Vertex Arrays Object (VAO) Setup
+	// std::cout << "vertex data size " << vertexData.size() << std::endl;
+	//  Vertex Arrays Object (VAO) Setup
 	glGenVertexArrays(1, &gVertexArrayObject);
 	// We bind (i.e. select) to the Vertex Array Object (VAO) that we want to work withn.
 	glBindVertexArray(gVertexArrayObject);
@@ -348,7 +348,7 @@ void VertexSpecification(ChunkManager &chunkManager)
 	std::vector<GLuint> indexBufferData;
 
 	indexBufferData = chunkManager.get_index_data();
-	//std::cout << indexBufferData.size() << std::endl;
+	// std::cout << indexBufferData.size() << std::endl;
 
 	glGenBuffers(1, &gIndexBufferObject);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIndexBufferObject);
@@ -400,27 +400,14 @@ void VertexSpecification(ChunkManager &chunkManager)
 void PreDraw()
 {
 	glEnable(GL_DEPTH_TEST);
-	// glEnable(GL_CULL_FACE);
-	// glCullFace(GL_FRONT);
-
-	// Initialize clear color
-	// This is the background of the screen.
 	glViewport(0, 0, gScreenWidth, gScreenHeight);
 	glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
-
-	// Clear color buffer and Depth Buffer
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-	// Use our shader
 	glUseProgram(gGraphicsPipelineShaderProgram);
 
-	// Model transformation by translating our object into world spaceu
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, g_uOffset));
-
-	// Update our model matrix by applying a rotation after our translation
 	model = glm::rotate(model, glm::radians(g_uRotate), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	// Retrieve our location of our Model Matrix
 	GLint u_ModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ModelMatrix");
 	if (u_ModelMatrixLocation >= 0)
 	{
@@ -432,7 +419,6 @@ void PreDraw()
 		exit(EXIT_FAILURE);
 	}
 
-	// Update the View Matrix
 	GLint u_ViewMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ViewMatrix");
 	if (u_ViewMatrixLocation >= 0)
 	{
@@ -441,18 +427,13 @@ void PreDraw()
 	}
 	else
 	{
-		std::cout << "Could not find u_ModelMatrix, maybe a mispelling?\n";
+		std::cout << "Could not find u_ViewMatrix, maybe a mispelling?\n";
 		exit(EXIT_FAILURE);
 	}
 
-	// Projection matrix (in perspective)
-	float farPlane = 100.0f; // Set the desired view distance (far plane)
-	glm::mat4 perspective = glm::perspective(glm::radians(45.0f),
-											 (float)gScreenWidth / (float)gScreenHeight,
-											 0.1f,
-											 farPlane);
+	float farPlane = 100.0f;
+	glm::mat4 perspective = glm::perspective(glm::radians(45.0f), (float)gScreenWidth / (float)gScreenHeight, 0.1f, farPlane);
 
-	// Retrieve our location of our perspective matrix uniform
 	GLint u_ProjectionLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_Projection");
 	if (u_ProjectionLocation >= 0)
 	{
@@ -460,20 +441,7 @@ void PreDraw()
 	}
 	else
 	{
-		std::cout << "Could not find u_Perspective, maybe a mispelling?\n";
-		exit(EXIT_FAILURE);
-	}
-
-	// Update the light direction uniform
-	GLint u_LightDirectionLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_LightDirection");
-	if (u_LightDirectionLocation >= 0)
-	{
-		glm::vec3 lightDirection(0.0f, -1.0f, 0.0f);
-		glUniform3fv(u_LightDirectionLocation, 1, glm::value_ptr(lightDirection));
-	}
-	else
-	{
-		std::cout << "Could not find u_LightDirection, maybe a misspelling?\n";
+		std::cout << "Could not find u_Projection, maybe a mispelling?\n";
 		exit(EXIT_FAILURE);
 	}
 }
@@ -600,19 +568,19 @@ void Input(ChunkManager &chunkManager)
 		// Update our position of the camera
 		if (state[SDL_SCANCODE_W])
 		{
-			gCamera.MoveForward(0.1f);
+			gCamera.MoveForward(0.2f);
 		}
 		if (state[SDL_SCANCODE_S])
 		{
-			gCamera.MoveBackward(0.1f);
+			gCamera.MoveBackward(0.2f);
 		}
 		if (state[SDL_SCANCODE_A])
 		{
-			gCamera.MoveLeft(0.1f);
+			gCamera.MoveLeft(0.2f);
 		}
 		if (state[SDL_SCANCODE_D])
 		{
-			gCamera.MoveRight(0.1f);
+			gCamera.MoveRight(0.2f);
 		}
 
 		// Update the mouse look of the camera

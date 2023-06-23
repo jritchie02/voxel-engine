@@ -15,7 +15,7 @@ public:
     ~Chunk();
 
     // Constants
-    static const int CHUNK_SIZE = 4;
+    static const int CHUNK_SIZE = 16;
     static constexpr float BLOCK_SIZE = 1.0f;
 
     // Methods
@@ -32,7 +32,7 @@ public:
 
 private: 
     // Methods
-    std::vector<GLfloat> generateCubeVertices(int x, int y, int z, int xOffset, int zOffset, std::vector<GLuint> &indices, GLuint &baseIndex);
+    std::vector<GLfloat> generateCubeVertices(int x, int y, int z, std::vector<GLuint> &indices, GLuint &baseIndex);
     bool hasNeighborOnFace(int x, int y, int z, int offsetX, int offsetY, int offsetZ);
     void addFace(std::vector<GLuint> &indices, GLuint &baseIndex);
 

@@ -13,7 +13,7 @@ public:
     ~ChunkManager();
 
     // Constant
-    static const int CHUNK_GRID_SIZE = 2; // Y x Y grid Ex: 2 is 2x2 grid
+    static const int CHUNK_GRID_SIZE = 8; // Y x Y grid Ex: 2 is 2x2 grid
 
     // Methods
     void GenerateChunks();

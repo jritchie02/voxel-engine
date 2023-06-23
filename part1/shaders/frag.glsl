@@ -1,8 +1,5 @@
 #version 410 core
 
-// Uniform variables
-uniform vec3 u_LightDirection;
-
 // Pass vertex colors and normal from the vertex shader
 in vec3 v_vertexColors;
 in vec3 v_normal;
@@ -11,12 +8,11 @@ out vec4 color;
 
 void main()
 {
-    // Calculate the dot product between the light direction and the surface normal
-    float diffuse = max(dot(normalize(v_normal), normalize(u_LightDirection)), 0.0);
-    float diffuseDirection = max(dot(normalize(v_normal), vec3(0.0f, 2.0f, 0.0f)), 0.0);
+    vec3 normal = v_normal;
 
-    float diffuseResult = (.5 * diffuse + diffuseDirection * .5) + .15f;
-
-    // Apply the diffuse color and intensity to the fragment color
-    color = vec4(v_vertexColors * diffuseResult, 1.0);
+    vec3 lightDirection = vec3(0.0f, .05f, 0.0f);
+    float diffuseIntensity = max(dot(normal, lightDirection), 0.0);
+    vec3 diffuseColor = v_vertexColors;
+    vec3 finalColor = diffuseIntensity * diffuseColor;
+    color = vec4(finalColor, 1.0);
 }
