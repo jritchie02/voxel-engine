@@ -30,7 +30,11 @@ After boundary checking we reduce the number to
 
 This project is largely inspired by Minecrafts terrain generation system. To expand this project, an algorithm like Greedy meshing can be applied to collapse triangle faces on the same plane into larger sections. This would reduce the over vertex count drastically.
 
-
+To run the program run 
+  * python3 build.py
+  * ./project.exe
+  * WASD to move camera and Mouse scroll to move up and down
+   
 * Name and partners name(At most teams of 2 folks total)
   * Team member 1: Jared Ritchie
 * How many hours did it take you to complete this final project?
