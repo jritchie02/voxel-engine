@@ -64,10 +64,6 @@ GLuint gIndexBufferObject = 0;
 
 // Solid Fill = true, Wireframe = false
 bool drawType = true;
-// Model to draw
-int modelId = 0;
-// True if a model should be rendered to screen
-bool loadedModel = false;
 
 // Shaders
 // Here we setup two shaders, a vertex shader and a fragment shader.
@@ -316,9 +312,6 @@ void VertexSpecification(ChunkManager &chunkManager)
 {
 	std::vector<GLfloat> vertexData;
 
-	// Load the diffuse texture
-	// gTexture.LoadTexture(chunkManager.at(modelId).get_diffuse_texture());
-
 	// Get the vertex data for the model
 	vertexData = chunkManager.get_vertex_data();
 
@@ -348,7 +341,6 @@ void VertexSpecification(ChunkManager &chunkManager)
 	std::vector<GLuint> indexBufferData;
 
 	indexBufferData = chunkManager.get_index_data();
-	// std::cout << indexBufferData.size() << std::endl;
 
 	glGenBuffers(1, &gIndexBufferObject);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIndexBufferObject);
