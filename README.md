@@ -34,7 +34,9 @@ To run the program run
   * python3 build.py
   * ./project.exe
   * WASD to move camera and Mouse scroll to move up and down
-   
+  * To modify the number of chunks, or voxels per chunk update the CHUNK_SIZE/CHUNK_GRID_SIZE in Chunk.hpp and ChunkManager.hpp and recompile.
+
+
 * Name and partners name(At most teams of 2 folks total)
   * Team member 1: Jared Ritchie
 * How many hours did it take you to complete this final project?
