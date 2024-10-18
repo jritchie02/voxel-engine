@@ -33,22 +33,22 @@ ChunkManager::ChunkManager()
             // Set the pointers to the neighboring chunks
             if (y > 0)
             {
-                chunk->setBackNeighbor(m_ChunkGrid[x][y - 1]);
+                chunk->SetBackNeighbor(m_ChunkGrid[x][y - 1]);
             }
 
             if (y < CHUNK_GRID_SIZE - 1)
             {
-                chunk->setFrontNeighbor(m_ChunkGrid[x][y + 1]);
+                chunk->SetFrontNeighbor(m_ChunkGrid[x][y + 1]);
             }
 
             if (x > 0)
             {
-                chunk->setRightNeighbor(m_ChunkGrid[x - 1][y]);
+                chunk->SetRightNeighbor(m_ChunkGrid[x - 1][y]);
             }
 
             if (x < CHUNK_GRID_SIZE - 1)
             {
-                chunk->setLeftNeighbor(m_ChunkGrid[x + 1][y]);
+                chunk->SetLeftNeighbor(m_ChunkGrid[x + 1][y]);
             }
         }
     }
@@ -69,7 +69,7 @@ void ChunkManager::GenerateChunks()
 {
 }
 
-const std::vector<GLfloat> ChunkManager::get_vertex_data()
+const std::vector<GLfloat> ChunkManager::GetVertexData()
 {
     std::vector<GLfloat> vertices;
     GLuint baseIndex = 0;
@@ -78,7 +78,7 @@ const std::vector<GLfloat> ChunkManager::get_vertex_data()
     {
         for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
         {
-            std::vector<GLfloat> chunkVertices = m_ChunkGrid[x][z]->get_vertex_data(x, z, m_indexes, baseIndex);
+            std::vector<GLfloat> chunkVertices = m_ChunkGrid[x][z]->GetVertexData(x, z, m_indexes, baseIndex);
             vertices.insert(vertices.end(), chunkVertices.begin(), chunkVertices.end());
         }
     }
@@ -86,7 +86,7 @@ const std::vector<GLfloat> ChunkManager::get_vertex_data()
     return vertices;
 }
 
-const std::vector<GLuint> ChunkManager::get_index_data()
+const std::vector<GLuint> ChunkManager::GetIndexData()
 {
 
     return m_indexes;
@@ -100,10 +100,10 @@ void ChunkManager::UpdateChunks(int x, int y, int z)
     {
         for (int m = 0; m < CHUNK_GRID_SIZE; ++m)
         {
-            if (m_ChunkGrid[j][m]->isInBounds(x, y, z))
+            if (m_ChunkGrid[j][m]->IsInBounds(x, y, z))
             {
                 std::cout << "In Chunk " << j << ", " << m << std::endl;
-                m_ChunkGrid[j][m]->updateBlock(x, y, z, false);
+                m_ChunkGrid[j][m]->UpdateBlock(x, y, z, false);
                 blockUpdated = true;
                 break;
             }

@@ -19,8 +19,8 @@ public:
     void GenerateChunks();
     void UpdateChunks(int x, int y, int z);
 
-    const std::vector<GLfloat> get_vertex_data();
-    const std::vector<GLuint> get_index_data();
+    const std::vector<GLfloat> GetVertexData();
+    const std::vector<GLuint> GetIndexData();
 
 private:
     // 2D grid of chunk pointers

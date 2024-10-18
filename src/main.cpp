@@ -313,7 +313,7 @@ void VertexSpecification(ChunkManager &chunkManager)
 	std::vector<GLfloat> vertexData;
 
 	// Get the vertex data for the model
-	vertexData = chunkManager.get_vertex_data();
+	vertexData = chunkManager.GetVertexData();
 
 	// std::cout << "vertex data size " << vertexData.size() << std::endl;
 	//  Vertex Arrays Object (VAO) Setup
@@ -340,7 +340,7 @@ void VertexSpecification(ChunkManager &chunkManager)
 	// Index buffer data for a quad
 	std::vector<GLuint> indexBufferData;
 
-	indexBufferData = chunkManager.get_index_data();
+	indexBufferData = chunkManager.GetIndexData();
 
 	glGenBuffers(1, &gIndexBufferObject);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIndexBufferObject);
@@ -463,7 +463,7 @@ void Draw(ChunkManager &chunkManager)
 	// Select the vertex buffer object we want to enable
 	glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
 
-	int elements = chunkManager.get_index_data().size();
+	int elements = chunkManager.GetIndexData().size();
 
 	glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, nullptr);
 

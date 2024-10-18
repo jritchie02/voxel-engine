@@ -5,7 +5,7 @@ import platform
 # (1)==================== COMMON CONFIGURATION OPTIONS ======================= #
 COMPILER="g++ -std=c++17"   # The compiler we want to use 
 SOURCE="./src/*.cpp"        # Where the source code lives
-EXECUTABLE="engine"        # Name of the final executable
+EXECUTABLE="engine.exe"        # Name of the final executable
 # ======================= COMMON CONFIGURATION OPTIONS ======================= #
 
 # (2)=================== Platform specific configuration ===================== #
