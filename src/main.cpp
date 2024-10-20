@@ -29,8 +29,11 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <stb_image.h>
 #include "ChunkManager.hpp"
 #include "Camera.hpp"
+#include "Voxel.hpp"
+#include "Shader.hpp"
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvv Globals vvvvvvvvvvvvvvvvvvvvvvvvvv
 // Globals generally are prefixed with 'g' in this application.
@@ -55,198 +58,38 @@ GLuint gGraphicsPipelineShaderProgram = 0;
 // For example, we may have multiple vertex buffer objects (VBO) related to rendering one
 // object. The VAO allows us to setup the OpenGL state to render that object using the
 // correct layout and correct buffers with one call after being setup.
-GLuint gVertexArrayObject = 0;
+GLuint gVoxelVAO = 0;
 // Vertex Buffer Object (VBO)
 // Vertex Buffer Objects store information relating to vertices (e.g. positions, normals, textures)
 // VBOs are our mechanism for arranging geometry on the GPU.
-GLuint gVertexBufferObject = 0;
-GLuint gIndexBufferObject = 0;
+GLuint gVoxelVBO = 0;
+GLuint gVoxelIBO = 0;
+
+GLuint gSunVAO = 0;		// New VAO for the sun
+GLuint gSunVBO = 0;		// New VBO for the sun
+GLuint gSunIBO = 0;		// New IBO for the sun
+float gSunAngle = 0.0f; // Angle of the sun
+
+// Get our cube voxel and sun voxel
+Voxel sun(glm::vec3(20.0f, 40.0f, 20.0f), 1.5f, glm::vec2(0.0f, 0.0f));
 
 // Solid Fill = true, Wireframe = false
 bool drawType = true;
 
-// Shaders
-// Here we setup two shaders, a vertex shader and a fragment shader.
-// At a minimum, every Modern OpenGL program needs a vertex and a fragment
-// shader.
+// Uniforms
 float g_uOffset = -2.0f;
 float g_uRotate = 0.0f;
 
 // Camera
 Camera gCamera;
 
+std::vector<GLfloat> gVoxelVertexData;
+std::vector<GLuint> gVoxelIndexBufferData;
+
+std::vector<GLfloat> gSunVertexData;
+std::vector<GLuint> gSunIndexBufferData;
+
 // ^^^^^^^^^^^^^^^^^^^^^^^^ Globals ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-// vvvvvvvvvvvvvvvvvvv Error Handling Routines vvvvvvvvvvvvvvv
-static void GLClearAllErrors()
-{
-	while (glGetError() != GL_NO_ERROR)
-	{
-	}
-}
-
-// Returns true if we have an error
-static bool GLCheckErrorStatus(const char *function, int line)
-{
-	while (GLenum error = glGetError())
-	{
-		std::cout << "OpenGL Error:" << error
-				  << "\tLine: " << line
-				  << "\tfunction: " << function << std::endl;
-		return true;
-	}
-	return false;
-}
-
-#define GLCheck(x)      \
-	GLClearAllErrors(); \
-	x;                  \
-	GLCheckErrorStatus(#x, __LINE__);
-// ^^^^^^^^^^^^^^^^^^^ Error Handling Routines ^^^^^^^^^^^^^^^
-
-/**
- * LoadShaderAsString takes a filepath as an argument and will read line by line a file and return a string that is meant to be compiled at runtime for a vertex, fragment, geometry, tesselation, or compute shader.
- * e.g.
- *       LoadShaderAsString("./shaders/filepath");
- *
- * @param filename Path to the shader file
- * @return Entire file stored as a single string
- */
-std::string LoadShaderAsString(const std::string &filename)
-{
-	// Resulting shader program loaded as a single string
-	std::string result = "";
-
-	std::string line = "";
-	std::ifstream myFile(filename.c_str());
-
-	if (myFile.is_open())
-	{
-		while (std::getline(myFile, line))
-		{
-			result += line + '\n';
-		}
-		myFile.close();
-	}
-
-	return result;
-}
-
-/**
- * CompileShader will compile any valid vertex, fragment, geometry, tesselation, or compute shader.
- * e.g.
- *	    Compile a vertex shader: 	CompileShader(GL_VERTEX_SHADER, vertexShaderSource);
- *       Compile a fragment shader: 	CompileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
- *
- * @param type We use the 'type' field to determine which shader we are going to compile.
- * @param source : The shader source code.
- * @return id of the shaderObject
- */
-GLuint CompileShader(GLuint type, const std::string &source)
-{
-	// Compile our shaders
-	GLuint shaderObject;
-
-	// Based on the type passed in, we create a shader object specifically for that
-	// type.
-	if (type == GL_VERTEX_SHADER)
-	{
-		shaderObject = glCreateShader(GL_VERTEX_SHADER);
-	}
-	else if (type == GL_FRAGMENT_SHADER)
-	{
-		shaderObject = glCreateShader(GL_FRAGMENT_SHADER);
-	}
-
-	const char *src = source.c_str();
-	// The source of our shader
-	glShaderSource(shaderObject, 1, &src, nullptr);
-	// Now compile our shader
-	glCompileShader(shaderObject);
-
-	// Retrieve the result of our compilation
-	int result;
-	// Our goal with glGetShaderiv is to retrieve the compilation status
-	glGetShaderiv(shaderObject, GL_COMPILE_STATUS, &result);
-
-	if (result == GL_FALSE)
-	{
-		int length;
-		glGetShaderiv(shaderObject, GL_INFO_LOG_LENGTH, &length);
-		char *errorMessages = new char[length]; // Could also use alloca here.
-		glGetShaderInfoLog(shaderObject, length, &length, errorMessages);
-
-		if (type == GL_VERTEX_SHADER)
-		{
-			std::cout << "ERROR: GL_VERTEX_SHADER compilation failed!\n"
-					  << errorMessages << "\n";
-		}
-		else if (type == GL_FRAGMENT_SHADER)
-		{
-			std::cout << "ERROR: GL_FRAGMENT_SHADER compilation failed!\n"
-					  << errorMessages << "\n";
-		}
-		// Reclaim our memory
-		delete[] errorMessages;
-
-		// Delete our broken shader
-		glDeleteShader(shaderObject);
-
-		return 0;
-	}
-
-	return shaderObject;
-}
-
-/**
- * Creates a graphics program object (i.e. graphics pipeline) with a Vertex Shader and a Fragment Shader
- *
- * @param vertexShaderSource Vertex source code as a string
- * @param fragmentShaderSource Fragment shader source code as a string
- * @return id of the program Object
- */
-GLuint CreateShaderProgram(const std::string &vertexShaderSource, const std::string &fragmentShaderSource)
-{
-	// Create a new program object
-	GLuint programObject = glCreateProgram();
-
-	// Compile our shaders
-	GLuint myVertexShader = CompileShader(GL_VERTEX_SHADER, vertexShaderSource);
-	GLuint myFragmentShader = CompileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-
-	// Link our two shader programs together.
-	// Consider this the equivalent of taking two .cpp files, and linking them into
-	// one executable file.
-	glAttachShader(programObject, myVertexShader);
-	glAttachShader(programObject, myFragmentShader);
-	glLinkProgram(programObject);
-
-	// Validate our program
-	glValidateProgram(programObject);
-
-	// Once our final program Object has been created, we can
-	// detach and then delete our individual shaders.
-	glDetachShader(programObject, myVertexShader);
-	glDetachShader(programObject, myFragmentShader);
-	// Delete the individual shaders once we are done
-	glDeleteShader(myVertexShader);
-	glDeleteShader(myFragmentShader);
-
-	return programObject;
-}
-
-/**
- * Create the graphics pipeline
- *
- * @return void
- */
-void CreateGraphicsPipeline()
-{
-	std::string vertexShaderSource = LoadShaderAsString("./shaders/vert.glsl");
-	std::string fragmentShaderSource = LoadShaderAsString("./shaders/frag.glsl");
-
-	gGraphicsPipelineShaderProgram = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
-}
 
 /**
  * Initialization of the graphics application. Typically this will involve setting up a window
@@ -310,78 +153,127 @@ void InitializeProgram()
  */
 void VertexSpecification(ChunkManager &chunkManager)
 {
-	std::vector<GLfloat> vertexData;
-
 	// Get the vertex data for the model
-	vertexData = chunkManager.GetVertexData();
+	gVoxelVertexData = chunkManager.GetVertexData();
+	gVoxelIndexBufferData = chunkManager.GetIndexData();
 
-	// std::cout << "vertex data size " << vertexData.size() << std::endl;
-	//  Vertex Arrays Object (VAO) Setup
-	glGenVertexArrays(1, &gVertexArrayObject);
-	// We bind (i.e. select) to the Vertex Array Object (VAO) that we want to work withn.
-	glBindVertexArray(gVertexArrayObject);
+	// Store the sun data
+	gSunVertexData = sun.GetVertexData();
+	GLuint nextSunIndex = 0;
+	sun.GetIndexData(gSunIndexBufferData, nextSunIndex);
 
-	// Vertex Buffer Object (VBO) creation
-	// Create a new vertex buffer object
-	glGenBuffers(1, &gVertexBufferObject);
+	// === Setup Cube VAO ===
+	glGenVertexArrays(1, &gVoxelVAO);
+	glBindVertexArray(gVoxelVAO);
 
-	// Bind is equivalent to 'selecting the active buffer object' that we want to
-	// work with in OpenGL.
-	glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
-	// Now, in our currently binded buffer, we populate the data from our
-	// 'vertexPositions' (which is on the CPU), onto a buffer that will live
-	// on the GPU.
-	glBufferData(GL_ARRAY_BUFFER,					  // Kind of buffer we are working with
-													  // (e.g. GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER)
-				 vertexData.size() * sizeof(GLfloat), // Size of data in bytes
-				 vertexData.data(),					  // Raw array of data
-				 GL_STATIC_DRAW);					  // How we intend to use the data
+	glGenBuffers(1, &gVoxelVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, gVoxelVBO);
+	glBufferData(GL_ARRAY_BUFFER, gVoxelVertexData.size() * sizeof(GLfloat),
+				 gVoxelVertexData.data(), GL_STATIC_DRAW);
 
-	// Index buffer data for a quad
-	std::vector<GLuint> indexBufferData;
+	glGenBuffers(1, &gVoxelIBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVoxelIBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, gVoxelIndexBufferData.size() * sizeof(GLuint),
+				 gVoxelIndexBufferData.data(), GL_STATIC_DRAW);
 
-	indexBufferData = chunkManager.GetIndexData();
+	glEnableVertexAttribArray(0); // Position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (void *)0);
 
-	glGenBuffers(1, &gIndexBufferObject);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIndexBufferObject);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferData.size() * sizeof(GLuint),
-				 indexBufferData.data(), GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1); // Texture coordinates
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (GLvoid *)(sizeof(GL_FLOAT) * 3));
 
-	// For our Given Vertex Array Object, we need to tell OpenGL
-	// 'how' the information in our buffer will be used.
-	glEnableVertexAttribArray(0);
-	// For the specific attribute in our vertex specification, we use
-	// 'glVertexAttribPointer' to figure out how we are going to move
-	// through the data.
-	glVertexAttribPointer(0, // Attribute 0 corresponds to the enabled glEnableVertexAttribArray
-							 // In the future, you'll see in our vertex shader this also correspond
-							 // to (layout=0) which selects these attributes.
-						  3,					// The number of components (e.g. x,y,z = 3 components)
-						  GL_FLOAT,				// Type
-						  GL_FALSE,				// Is the data normalized
-						  sizeof(GL_FLOAT) * 6, // Stride
-						  (void *)0				// Offset
-	);
+	glEnableVertexAttribArray(2); // Normals
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (GLvoid *)(sizeof(GL_FLOAT) * 5));
 
-	// Now linking up the attributes in our VAO
-	// Color information
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1,
-						  3, // r,g,b
-						  GL_FLOAT,
-						  GL_FALSE,
-						  sizeof(GL_FLOAT) * 6,
-						  (GLvoid *)(sizeof(GL_FLOAT) * 3));
+	glBindVertexArray(0); // Unbind cube VAO
 
-	// Unbind our currently bound Vertex Array Object
-	glBindVertexArray(0);
+	// === Setup Sun VAO ===
+	glGenVertexArrays(1, &gSunVAO);
+	glBindVertexArray(gSunVAO);
 
-	// Disable any attributes we opened in our Vertex Attribute Arrray,
-	// as we do not want to leave them open.
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+	glGenBuffers(1, &gSunVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, gSunVBO);
+	glBufferData(GL_ARRAY_BUFFER, gSunVertexData.size() * sizeof(GLfloat),
+				 gSunVertexData.data(), GL_STATIC_DRAW);
+
+	GLuint sunIBO;
+	glGenBuffers(1, &sunIBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sunIBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, gSunIndexBufferData.size() * sizeof(GLuint),
+				 gSunIndexBufferData.data(), GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0); // Position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (void *)0);
+
+	glEnableVertexAttribArray(1); // Texture coordinates
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (GLvoid *)(sizeof(GL_FLOAT) * 3));
+
+	glEnableVertexAttribArray(2); // Normals
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * 8, (GLvoid *)(sizeof(GL_FLOAT) * 5));
+
+	glBindVertexArray(0); // Unbind sun VAO
 }
 
+void LoadTexture()
+{
+	// Generate the texture
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	// set the texture wrapping/filtering options (on the currently bound texture object)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// load and generate the texture
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load("./assets/minecraft_texture_atlas.png", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+}
+
+void UpdateSunPosition(float deltaTime, Shader &lightingShader, Shader &lightCubeShader)
+{
+	float radius = 30.0f;			 // Radius of the circle
+	float speed = 0.5f;				 // Angular speed (radians per second)
+	float oscillationHeight = 40.0f; // Maximum height of oscillation
+	float oscillationSpeed = 1.0f;	 // Speed of vertical oscillation (radians per second)
+
+	// Increment the angle based on speed and elapsed time
+	gSunAngle += speed * deltaTime;
+
+	// Keep the angle within [0, 2π] to avoid overflow
+	if (gSunAngle > glm::two_pi<float>())
+	{
+		gSunAngle -= glm::two_pi<float>();
+	}
+
+	// Compute new position on the circle (XZ-plane)
+	float x = radius * cos(gSunAngle);
+	float z = radius * sin(gSunAngle);
+
+	// Calculate the vertical position using sine for oscillation
+	float y = oscillationHeight * sin(oscillationSpeed * gSunAngle); // Vary y based on angle
+
+	// Create new position vector
+	glm::vec3 newPosition(x, y, z);
+
+	// 1. Update the sun's position using the setter
+	sun.SetPosition(newPosition);
+
+	// 2. Pass the model matrix to the sun's visual representation (light cube)
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), newPosition);
+	lightCubeShader.use();
+	lightCubeShader.setMat4("model", model);
+}
 /**
  * PreDraw
  * Typically we will use this for setting some sort of 'state'
@@ -389,53 +281,39 @@ void VertexSpecification(ChunkManager &chunkManager)
  * 		 pipeline.
  * @return void
  */
-void PreDraw()
+void PreDraw(Shader &lightingShader, Shader &lightCubeShader, float deltaTime)
 {
 	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, gScreenWidth, gScreenHeight);
-	glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
+	glClearColor(135.0f / 255.0f, 206.0f / 255.0f, 235.0f / 255.0f, 1.0f); // Sky Blue
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	glUseProgram(gGraphicsPipelineShaderProgram);
 
+	// Model, view, projection setup
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, g_uOffset));
 	model = glm::rotate(model, glm::radians(g_uRotate), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	GLint u_ModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ModelMatrix");
-	if (u_ModelMatrixLocation >= 0)
-	{
-		glUniformMatrix4fv(u_ModelMatrixLocation, 1, GL_FALSE, &model[0][0]);
-	}
-	else
-	{
-		std::cout << "Could not find u_ModelMatrix, maybe a mispelling?\n";
-		exit(EXIT_FAILURE);
-	}
-
-	GLint u_ViewMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ViewMatrix");
-	if (u_ViewMatrixLocation >= 0)
-	{
-		glm::mat4 viewMatrix = gCamera.GetViewMatrix();
-		glUniformMatrix4fv(u_ViewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-	}
-	else
-	{
-		std::cout << "Could not find u_ViewMatrix, maybe a mispelling?\n";
-		exit(EXIT_FAILURE);
-	}
-
 	float farPlane = 100.0f;
-	glm::mat4 perspective = glm::perspective(glm::radians(45.0f), (float)gScreenWidth / (float)gScreenHeight, 0.1f, farPlane);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+											(float)gScreenWidth / (float)gScreenHeight, 0.1f, farPlane);
+	glm::mat4 view = gCamera.GetViewMatrix();
 
-	GLint u_ProjectionLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_Projection");
-	if (u_ProjectionLocation >= 0)
-	{
-		glUniformMatrix4fv(u_ProjectionLocation, 1, GL_FALSE, &perspective[0][0]);
-	}
-	else
-	{
-		std::cout << "Could not find u_Projection, maybe a mispelling?\n";
-		exit(EXIT_FAILURE);
-	}
+	// Update shaders and sun position
+	UpdateSunPosition(deltaTime, lightingShader, lightCubeShader);
+
+	// Setup lighting shader
+	lightingShader.use();
+	lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+	lightingShader.setVec3("lightPos", sun.GetPosition());
+	lightingShader.setVec3("viewPos",
+						   gCamera.GetEyeXPosition(), gCamera.GetEyeYPosition(), gCamera.GetEyeZPosition());
+	lightingShader.setMat4("projection", projection);
+	lightingShader.setMat4("view", view);
+	lightingShader.setMat4("model", model);
+
+	// Set up sun shader
+	lightCubeShader.use();
+	lightCubeShader.setMat4("projection", projection);
+	lightCubeShader.setMat4("view", view);
 }
 
 /**
@@ -446,8 +324,9 @@ void PreDraw()
  *
  * @return void
  */
-void Draw(ChunkManager &chunkManager)
+void Draw(Shader &lightingShader, Shader &lightCubeShader)
 {
+	// Set polygon mode
 	if (drawType)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -457,18 +336,21 @@ void Draw(ChunkManager &chunkManager)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
-	// Enable our attributes
-	glBindVertexArray(gVertexArrayObject);
-
-	// Select the vertex buffer object we want to enable
-	glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
-
-	int elements = chunkManager.GetIndexData().size();
-
+	// Draw voxel object
+	lightingShader.use();
+	glBindVertexArray(gVoxelVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, gVoxelVBO);
+	int elements = gVoxelIndexBufferData.size();
 	glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, nullptr);
 
-	// Stop using our current graphics pipeline
-	// Note: This is not necessary if we only have one graphics pipeline.
+	// Draw the sun (light cube)
+	lightCubeShader.use();
+	glBindVertexArray(gSunVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, gSunVBO);
+	int sunElements = gSunIndexBufferData.size();
+	glDrawElements(GL_TRIANGLES, sunElements, GL_UNSIGNED_INT, nullptr);
+
+	// Reset the graphics pipeline (optional)
 	glUseProgram(0);
 }
 
@@ -589,20 +471,27 @@ void Input(ChunkManager &chunkManager)
  *
  * @return void
  */
-void MainLoop(ChunkManager &chunkManager)
+void MainLoop(ChunkManager &chunkManager, Shader &lightingShader, Shader &lightCubeShader)
 {
 	SDL_WarpMouseInWindow(gGraphicsApplicationWindow, 640 / 2, 480 / 2);
+	// Store the previous time
+	uint64_t lastTime = SDL_GetPerformanceCounter();
+	float deltaTime = 0.0f;
 
 	// While application is running
 	while (!gQuit)
 	{
+		// Calculate delta time
+		uint64_t currentTime = SDL_GetPerformanceCounter();
+		deltaTime = (float)(currentTime - lastTime) / SDL_GetPerformanceFrequency();
+		lastTime = currentTime;
 		// Handle Input
 		Input(chunkManager);
 		// Setup anything (i.e. OpenGL State) that needs to take
 		// place before draw calls
-		PreDraw();
+		PreDraw(lightingShader, lightCubeShader, deltaTime);
 		// Draw Calls in OpenGL
-		Draw(chunkManager);
+		Draw(lightingShader, lightCubeShader);
 		// Update screen of our specified window
 		SDL_GL_SwapWindow(gGraphicsApplicationWindow);
 	}
@@ -622,11 +511,14 @@ void CleanUp()
 	gGraphicsApplicationWindow = nullptr;
 
 	// Delete our OpenGL Objects
-	glDeleteBuffers(1, &gVertexBufferObject);
-	glDeleteVertexArrays(1, &gVertexArrayObject);
+	glDeleteBuffers(1, &gVoxelVBO);
+	glDeleteVertexArrays(1, &gVoxelVAO);
+
+	// Delete our Sun OpenGL Objects
+	glDeleteBuffers(1, &gSunVBO);
+	glDeleteVertexArrays(1, &gSunVAO);
 
 	// Delete our Graphics pipeline
-	glDeleteProgram(gGraphicsPipelineShaderProgram);
 
 	// Quit SDL subsystems
 	SDL_Quit();
@@ -647,12 +539,15 @@ int main(int argc, char **argv)
 	// 3. Setup our geometry
 	VertexSpecification(chunkManager);
 
-	// 4. Create our graphics pipeline
-	// 	- At a minimum, this means the vertex and fragment shader
-	CreateGraphicsPipeline();
+	// 4. Load the texture
+	LoadTexture();
+
+	// 5. Create our graphics pipeline
+	Shader lightingShader("./shaders/colors.vs", "./shaders/colors.fs");
+	Shader lightCubeShader("./shaders/light_cube.vs", "./shaders/light_cube.fs");
 
 	// 5. Call the main application loop
-	MainLoop(chunkManager);
+	MainLoop(chunkManager, lightingShader, lightCubeShader);
 
 	// 6. Call the cleanup function when our program terminates
 	CleanUp();

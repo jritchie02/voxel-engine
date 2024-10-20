@@ -3,9 +3,8 @@
 
 #include <vector>
 #include <glad/glad.h>
-#include "Block.hpp"
 #include "PerlinNoise.hpp"
-
+#include "Voxel.hpp"
 class Chunk
 {
 public:
@@ -16,11 +15,10 @@ public:
 
     // Constants
     static const int CHUNK_SIZE = 16;
-    static constexpr float BLOCK_SIZE = 1.0f;
 
     // Methods
     const std::vector<GLfloat> GetVertexData(int xOffset, int zOffset, std::vector<GLuint> &indices, GLuint &baseIndex);
-    Block *GetBlock(int x, int y, int z);
+    Voxel *GetVoxel(int x, int y, int z);
     void UpdateBlock(int x, int y, int z, bool isActive);
     bool IsInBounds(float x, float y, float z);
 
@@ -30,14 +28,14 @@ public:
     void SetLeftNeighbor(Chunk *chunk);
     void SetRightNeighbor(Chunk *chunk);
 
-private: 
+private:
     // Methods
     std::vector<GLfloat> GenerateCubeVertices(int x, int y, int z, std::vector<GLuint> &indices, GLuint &baseIndex);
     bool HasNeighborOnFace(int x, int y, int z, int offsetX, int offsetY, int offsetZ);
     void AddFace(std::vector<GLuint> &indices, GLuint &baseIndex);
 
     // Member Variables
-    std::vector<std::vector<std::vector<Block>>> m_Blocks;
+    std::vector<std::vector<std::vector<Voxel>>> m_Voxels;
     int m_xOffset;
     int m_zOffset;
     Chunk *m_frontNeighbor;

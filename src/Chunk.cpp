@@ -14,9 +14,11 @@ Chunk::Chunk()
 
 Chunk::Chunk(const siv::PerlinNoise perlin, int xOffset, int zOffset)
 {
+    m_xOffset = xOffset * CHUNK_SIZE;
+    m_zOffset = zOffset * CHUNK_SIZE;
     // Initialize the m_Blocks vector
-    m_Blocks.resize(CHUNK_SIZE, std::vector<std::vector<Block>>(CHUNK_SIZE, std::vector<Block>(CHUNK_SIZE)));
-    // Iterate over x, y, z coordinates to initialize each block
+    m_Voxels.resize(CHUNK_SIZE, std::vector<std::vector<Voxel>>(CHUNK_SIZE, std::vector<Voxel>(CHUNK_SIZE)));
+    // Iterate over x, y, z coordinates to initialize each Voxel
     for (int x = 0; x < CHUNK_SIZE; ++x)
     {
         for (int y = 0; y < CHUNK_SIZE; ++y)
@@ -32,13 +34,13 @@ Chunk::Chunk(const siv::PerlinNoise perlin, int xOffset, int zOffset)
                 // Define the threshold value for terrain generation
                 double threshold = 0.56; // Adjust this value to control the terrain height
 
-                // Create and assign a new block
-                Block block;
-                m_Blocks[x][y][z] = block;
+                // Create and assign a new Voxel
+                Voxel v(glm::vec3(x + m_xOffset, y, z + m_zOffset), 1, glm::vec2(9, 7));
+                m_Voxels[x][y][z] = v;
 
                 if (noise < threshold)
                 {
-                    m_Blocks[x][y][z].SetActive(false);
+                    m_Voxels[x][y][z].SetActive(false);
                 }
             }
         }
@@ -48,9 +50,6 @@ Chunk::Chunk(const siv::PerlinNoise perlin, int xOffset, int zOffset)
     m_rightNeighbor = nullptr;
     m_backNeighbor = nullptr;
     m_leftNeighbor = nullptr;
-
-    m_xOffset = xOffset * CHUNK_SIZE * BLOCK_SIZE;
-    m_zOffset = zOffset * CHUNK_SIZE * BLOCK_SIZE;
 }
 
 Chunk::~Chunk()
@@ -79,16 +78,16 @@ void Chunk::UpdateBlock(int x, int y, int z, bool isActive)
     x -= m_xOffset;
     z -= m_zOffset;
 
-    std::cout << "Getting block at " << x << ", " << y << ", " << z << std::endl;
+    std::cout << "Getting Voxel at " << x << ", " << y << ", " << z << std::endl;
 
     if (x >= CHUNK_SIZE || y >= CHUNK_SIZE || z >= CHUNK_SIZE ||
         x < 0 || y < 0 || z < 0)
     {
-        std::cout << "block is out of bounds " << std::endl;
+        std::cout << "Voxel is out of bounds " << std::endl;
     }
     else
     {
-        m_Blocks[x][y][z].SetActive(isActive);
+        m_Voxels[x][y][z].SetActive(isActive);
     }
 }
 
@@ -96,8 +95,8 @@ const std::vector<GLfloat> Chunk::GetVertexData(int xOffset, int zOffset, std::v
 {
     std::vector<GLfloat> vertices;
 
-    xOffset = xOffset * CHUNK_SIZE * BLOCK_SIZE;
-    zOffset = zOffset * CHUNK_SIZE * BLOCK_SIZE;
+    xOffset = xOffset * CHUNK_SIZE;
+    zOffset = zOffset * CHUNK_SIZE;
 
     // Iterate over the blocks in the chunk
     for (int x = 0; x < CHUNK_SIZE; x++)
@@ -106,7 +105,7 @@ const std::vector<GLfloat> Chunk::GetVertexData(int xOffset, int zOffset, std::v
         {
             for (int z = 0; z < CHUNK_SIZE; z++)
             {
-                Block currBlock = m_Blocks[x][y][z];
+                Voxel currBlock = m_Voxels[x][y][z];
                 if (currBlock.IsActive())
                 {
                     std::vector<GLfloat> cubeVertices = GenerateCubeVertices(x, y, z, indices, baseIndex);
@@ -121,98 +120,78 @@ const std::vector<GLfloat> Chunk::GetVertexData(int xOffset, int zOffset, std::v
 
 bool Chunk::IsInBounds(float x, float y, float z)
 {
-    bool result = (x >= m_xOffset && x < m_xOffset + (CHUNK_SIZE * BLOCK_SIZE) &&
-                   z >= m_zOffset && z < m_zOffset + (CHUNK_SIZE * BLOCK_SIZE));
-    int xOffsetTotal = m_xOffset + (CHUNK_SIZE * BLOCK_SIZE);
-    int zOffsetTotal = m_zOffset + (CHUNK_SIZE * BLOCK_SIZE);
+    bool result = (x >= m_xOffset && x < m_xOffset + (CHUNK_SIZE) &&
+                   z >= m_zOffset && z < m_zOffset + (CHUNK_SIZE));
+    int xOffsetTotal = m_xOffset + (CHUNK_SIZE);
+    int zOffsetTotal = m_zOffset + (CHUNK_SIZE);
 
     return result;
 }
 
 std::vector<GLfloat> Chunk::GenerateCubeVertices(int x, int y, int z, std::vector<GLuint> &indices, GLuint &baseIndex)
 {
-    glm::vec3 blockPosition((x * BLOCK_SIZE) + m_xOffset, y * BLOCK_SIZE, (z * BLOCK_SIZE) + m_zOffset);
+    Voxel voxel = m_Voxels[x][y][z];
 
-    // Define the color for the block based on the block type
-    std::vector<GLfloat> color = {0.0f, 1.0f, 0.0f}; // Green
-    // Calculate the coordinates of the cube's vertices based on the block position
+    // Calculate the coordinates of the cube's vertices based on the Voxel position
     std::vector<GLfloat> vertices;
 
     // Front face
     if (!HasNeighborOnFace(x, y, z, 0, 0, 1))
     {
-        // std::cout << "Adding front face" << std::endl;
-        vertices.insert(vertices.end(), {
-                                            blockPosition.x, blockPosition.y + BLOCK_SIZE, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2],              // Vertex 0
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y + BLOCK_SIZE, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2], // Vertex 1
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2],              // Vertex 2
-                                            blockPosition.x, blockPosition.y, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2]                            // Vertex 3
-                                        });
+        std::vector<GLfloat> frontVertices = voxel.GetFrontVertices();
+        vertices.insert(vertices.end(), frontVertices.begin(), frontVertices.end());
+
+        // Add the face indices (update this depending on how your indices are structured)
         AddFace(indices, baseIndex);
     }
 
     // Back face
     if (!HasNeighborOnFace(x, y, z, 0, 0, -1))
     {
-        // std::cout << "Adding back face" << std::endl;
-        vertices.insert(vertices.end(), {
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y + BLOCK_SIZE, blockPosition.z, color[0], color[1], color[2], // Vertex 4
-                                            blockPosition.x, blockPosition.y + BLOCK_SIZE, blockPosition.z, color[0], color[1], color[2],              // Vertex 5
-                                            blockPosition.x, blockPosition.y, blockPosition.z, color[0], color[1], color[2],                           // Vertex 6
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y, blockPosition.z, color[0], color[1], color[2]               // Vertex 7
-                                        });
+        std::vector<GLfloat> frontVertices = voxel.GetBackVertices();
+        vertices.insert(vertices.end(), frontVertices.begin(), frontVertices.end());
+
+        // Add the face indices (update this depending on how your indices are structured)
         AddFace(indices, baseIndex);
     }
 
     // Left face
     if (!HasNeighborOnFace(x, y, z, -1, 0, 0))
     {
-        // std::cout << "Adding left face" << std::endl;
-        vertices.insert(vertices.end(), {
-                                            blockPosition.x, blockPosition.y + BLOCK_SIZE, blockPosition.z, color[0], color[1], color[2],              // Vertex 8
-                                            blockPosition.x, blockPosition.y + BLOCK_SIZE, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2], // Vertex 9
-                                            blockPosition.x, blockPosition.y, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2],              // Vertex 10
-                                            blockPosition.x, blockPosition.y, blockPosition.z, color[0], color[1], color[2]                            // Vertex 11
-                                        });
+        std::vector<GLfloat> frontVertices = voxel.GetLeftVertices();
+        vertices.insert(vertices.end(), frontVertices.begin(), frontVertices.end());
+
+        // Add the face indices (update this depending on how your indices are structured)
         AddFace(indices, baseIndex);
     }
 
     // Right face
     if (!HasNeighborOnFace(x, y, z, 1, 0, 0))
     {
-        // std::cout << "Adding right face" << std::endl;
-        vertices.insert(vertices.end(), {
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y + BLOCK_SIZE, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2], // Vertex 12
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y + BLOCK_SIZE, blockPosition.z, color[0], color[1], color[2],              // Vertex 13
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y, blockPosition.z, color[0], color[1], color[2],                           // Vertex 14
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2]               // Vertex 15
-                                        });
+        std::vector<GLfloat> frontVertices = voxel.GetRightVertices();
+        vertices.insert(vertices.end(), frontVertices.begin(), frontVertices.end());
+
+        // Add the face indices (update this depending on how your indices are structured)
         AddFace(indices, baseIndex);
     }
 
     // Top face
     if (!HasNeighborOnFace(x, y, z, 0, 1, 0))
     {
-        // std::cout << "Adding top face" << std::endl;
-        vertices.insert(vertices.end(), {
-                                            blockPosition.x, blockPosition.y + BLOCK_SIZE, blockPosition.z, color[0], color[1], color[2],                           // Vertex 16
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y + BLOCK_SIZE, blockPosition.z, color[0], color[1], color[2],              // Vertex 17
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y + BLOCK_SIZE, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2], // Vertex 18
-                                            blockPosition.x, blockPosition.y + BLOCK_SIZE, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2]               // Vertex 19
-                                        });
+        std::vector<GLfloat> frontVertices = voxel.GetTopVertices();
+        vertices.insert(vertices.end(), frontVertices.begin(), frontVertices.end());
+
+        // Add the face indices (update this depending on how your indices are structured)
         AddFace(indices, baseIndex);
     }
 
     // Bottom face
     if (!HasNeighborOnFace(x, y, z, 0, -1, 0))
     {
-        // std::cout << "Adding bottom face" << std::endl;
-        vertices.insert(vertices.end(), {
-                                            blockPosition.x, blockPosition.y, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2],              // Vertex 20
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y, blockPosition.z + BLOCK_SIZE, color[0], color[1], color[2], // Vertex 21
-                                            blockPosition.x + BLOCK_SIZE, blockPosition.y, blockPosition.z, color[0], color[1], color[2],              // Vertex 22
-                                            blockPosition.x, blockPosition.y, blockPosition.z, color[0], color[1], color[2]                            // Vertex 23
-                                        });
+        std::vector<GLfloat> frontVertices = voxel.GetBottomVertices();
+        vertices.insert(vertices.end(), frontVertices.begin(), frontVertices.end());
+
+        // Add the face indices (update this depending on how your indices are structured)
         AddFace(indices, baseIndex);
     }
 
@@ -240,33 +219,33 @@ bool Chunk::HasNeighborOnFace(int x, int y, int z, int offsetX, int offsetY, int
         neighborY >= 0 && neighborY < CHUNK_SIZE &&
         neighborZ >= 0 && neighborZ < CHUNK_SIZE)
     {
-        return m_Blocks[neighborX][neighborY][neighborZ].IsActive();
+        return m_Voxels[neighborX][neighborY][neighborZ].IsActive();
     }
-    
+
     // Check neighboring chunks if the position is on an edge case
     if (neighborX < 0 && m_rightNeighbor != nullptr)
     {
-        return m_rightNeighbor->GetBlock(CHUNK_SIZE - 1, neighborY, neighborZ)->IsActive();
+        return m_rightNeighbor->GetVoxel(CHUNK_SIZE - 1, neighborY, neighborZ)->IsActive();
     }
 
     else if (neighborX >= CHUNK_SIZE && m_leftNeighbor != nullptr)
     {
-        return m_leftNeighbor->GetBlock(0, neighborY, neighborZ)->IsActive();
+        return m_leftNeighbor->GetVoxel(0, neighborY, neighborZ)->IsActive();
     }
 
     if (neighborZ < 0 && m_backNeighbor != nullptr)
     {
-        return m_backNeighbor->GetBlock(neighborX, neighborY, CHUNK_SIZE - 1)->IsActive();
+        return m_backNeighbor->GetVoxel(neighborX, neighborY, CHUNK_SIZE - 1)->IsActive();
     }
     else if (neighborZ >= CHUNK_SIZE && m_frontNeighbor != nullptr)
     {
-        return m_frontNeighbor->GetBlock(neighborX, neighborY, 0)->IsActive();
+        return m_frontNeighbor->GetVoxel(neighborX, neighborY, 0)->IsActive();
     }
 
     return isDefault;
 }
 
-Block *Chunk::GetBlock(int x, int y, int z)
+Voxel *Chunk::GetVoxel(int x, int y, int z)
 {
-    return &m_Blocks[x][y][z];
+    return &m_Voxels[x][y][z];
 }
