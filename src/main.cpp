@@ -240,7 +240,7 @@ void LoadTexture()
 	stbi_image_free(data);
 }
 
-void UpdateSunPosition(float deltaTime, Shader &lightingShader, Shader &lightCubeShader)
+void UpdateSunPosition(float deltaTime, Shader &voxelShader, Shader &sunShader)
 {
 	float radius = 30.0f;			 // Radius of the circle
 	float speed = 0.5f;				 // Angular speed (radians per second)
@@ -269,10 +269,10 @@ void UpdateSunPosition(float deltaTime, Shader &lightingShader, Shader &lightCub
 	// 1. Update the sun's position using the setter
 	sun.SetPosition(newPosition);
 
-	// 2. Pass the model matrix to the sun's visual representation (light cube)
+	// 2. Pass the model matrix to the sun's visual representation
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), newPosition);
-	lightCubeShader.use();
-	lightCubeShader.setMat4("model", model);
+	sunShader.use();
+	sunShader.setMat4("model", model);
 }
 /**
  * PreDraw
@@ -281,7 +281,7 @@ void UpdateSunPosition(float deltaTime, Shader &lightingShader, Shader &lightCub
  * 		 pipeline.
  * @return void
  */
-void PreDraw(Shader &lightingShader, Shader &lightCubeShader, float deltaTime)
+void PreDraw(Shader &voxelShader, Shader &sunShader, float deltaTime)
 {
 	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, gScreenWidth, gScreenHeight);
@@ -298,22 +298,22 @@ void PreDraw(Shader &lightingShader, Shader &lightCubeShader, float deltaTime)
 	glm::mat4 view = gCamera.GetViewMatrix();
 
 	// Update shaders and sun position
-	UpdateSunPosition(deltaTime, lightingShader, lightCubeShader);
+	UpdateSunPosition(deltaTime, voxelShader, sunShader);
 
-	// Setup lighting shader
-	lightingShader.use();
-	lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-	lightingShader.setVec3("lightPos", sun.GetPosition());
-	lightingShader.setVec3("viewPos",
-						   gCamera.GetEyeXPosition(), gCamera.GetEyeYPosition(), gCamera.GetEyeZPosition());
-	lightingShader.setMat4("projection", projection);
-	lightingShader.setMat4("view", view);
-	lightingShader.setMat4("model", model);
+	// Setup voxel shader
+	voxelShader.use();
+	voxelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+	voxelShader.setVec3("lightPos", sun.GetPosition());
+	voxelShader.setVec3("viewPos",
+						gCamera.GetEyeXPosition(), gCamera.GetEyeYPosition(), gCamera.GetEyeZPosition());
+	voxelShader.setMat4("projection", projection);
+	voxelShader.setMat4("view", view);
+	voxelShader.setMat4("model", model);
 
 	// Set up sun shader
-	lightCubeShader.use();
-	lightCubeShader.setMat4("projection", projection);
-	lightCubeShader.setMat4("view", view);
+	sunShader.use();
+	sunShader.setMat4("projection", projection);
+	sunShader.setMat4("view", view);
 }
 
 /**
@@ -324,7 +324,7 @@ void PreDraw(Shader &lightingShader, Shader &lightCubeShader, float deltaTime)
  *
  * @return void
  */
-void Draw(Shader &lightingShader, Shader &lightCubeShader)
+void Draw(Shader &voxelShader, Shader &sunShader)
 {
 	// Set polygon mode
 	if (drawType)
@@ -337,14 +337,14 @@ void Draw(Shader &lightingShader, Shader &lightCubeShader)
 	}
 
 	// Draw voxel object
-	lightingShader.use();
+	voxelShader.use();
 	glBindVertexArray(gVoxelVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, gVoxelVBO);
 	int elements = gVoxelIndexBufferData.size();
 	glDrawElements(GL_TRIANGLES, elements, GL_UNSIGNED_INT, nullptr);
 
-	// Draw the sun (light cube)
-	lightCubeShader.use();
+	// Draw the sun
+	sunShader.use();
 	glBindVertexArray(gSunVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, gSunVBO);
 	int sunElements = gSunIndexBufferData.size();
@@ -471,7 +471,7 @@ void Input(ChunkManager &chunkManager)
  *
  * @return void
  */
-void MainLoop(ChunkManager &chunkManager, Shader &lightingShader, Shader &lightCubeShader)
+void MainLoop(ChunkManager &chunkManager, Shader &voxelShader, Shader &sunShader)
 {
 	SDL_WarpMouseInWindow(gGraphicsApplicationWindow, 640 / 2, 480 / 2);
 	// Store the previous time
@@ -489,9 +489,9 @@ void MainLoop(ChunkManager &chunkManager, Shader &lightingShader, Shader &lightC
 		Input(chunkManager);
 		// Setup anything (i.e. OpenGL State) that needs to take
 		// place before draw calls
-		PreDraw(lightingShader, lightCubeShader, deltaTime);
+		PreDraw(voxelShader, sunShader, deltaTime);
 		// Draw Calls in OpenGL
-		Draw(lightingShader, lightCubeShader);
+		Draw(voxelShader, sunShader);
 		// Update screen of our specified window
 		SDL_GL_SwapWindow(gGraphicsApplicationWindow);
 	}
@@ -543,11 +543,11 @@ int main(int argc, char **argv)
 	LoadTexture();
 
 	// 5. Create our graphics pipeline
-	Shader lightingShader("./shaders/colors.vs", "./shaders/colors.fs");
-	Shader lightCubeShader("./shaders/light_cube.vs", "./shaders/light_cube.fs");
+	Shader voxelShader("./shaders/voxel.vs", "./shaders/voxel.fs");
+	Shader sunShader("./shaders/sun.vs", "./shaders/sun.fs");
 
 	// 5. Call the main application loop
-	MainLoop(chunkManager, lightingShader, lightCubeShader);
+	MainLoop(chunkManager, voxelShader, sunShader);
 
 	// 6. Call the cleanup function when our program terminates
 	CleanUp();
